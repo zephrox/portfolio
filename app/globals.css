@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Google Fonts ─────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+/* ─── Design Tokens ────────────────────────────────────── */
+:root {
+  --bg:           #060612;
+  --bg-2:         #0a0a1f;
+  --surface:      #0f0e2a;
+  --surface-2:    #161530;
+  --border:       rgba(124, 58, 237, 0.15);
+  --border-bright:rgba(124, 58, 237, 0.35);
+
+  --purple:       #7c3aed;
+  --purple-light: #a78bfa;
+  --purple-glow:  rgba(124, 58, 237, 0.25);
+  --green-neon:   #00ffaa;
+  --green:        #10b981;
+  --blue-neon:    #00d4ff;
+  --blue:         #0ea5e9;
+  --amber:        #f59e0b;
+  --pink:         #ec4899;
+
+  --text-1: #f0eeff;
+  --text-2: #a9a3c4;
+  --text-3: #6b6585;
+
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --radius:       12px;
+  --transition:   0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* ─── Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  cursor: none;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg);
+  color: var(--text-1);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide default cursor everywhere */
+*, *::before, *::after { cursor: none !important; }
+
+/* ─── Custom Scrollbar ─────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-2); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--purple), var(--blue-neon));
+  border-radius: 2px;
+}
+
+/* ─── Noise texture overlay ────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ─── Selection ─────────────────────────────────────────── */
+::selection {
+  background: rgba(124, 58, 237, 0.4);
+  color: #fff;
+}
+
+/* ─── Typography helpers ────────────────────────────────── */
+.font-display  { font-family: var(--font-display); }
+.font-mono     { font-family: var(--font-mono); }
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--purple-light), var(--blue-neon), var(--green-neon));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-warm {
+  background: linear-gradient(135deg, var(--pink), var(--purple-light), var(--blue-neon));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Glow helpers ──────────────────────────────────────── */
+.glow-purple { box-shadow: 0 0 30px var(--purple-glow), 0 0 60px rgba(124,58,237,0.1); }
+.glow-green  { box-shadow: 0 0 30px rgba(0,255,170,0.2), 0 0 60px rgba(0,255,170,0.1); }
+.glow-blue   { box-shadow: 0 0 30px rgba(0,212,255,0.2), 0 0 60px rgba(0,212,255,0.1); }
+.text-glow-purple { text-shadow: 0 0 20px rgba(167,139,250,0.6); }
+.text-glow-green  { text-shadow: 0 0 20px rgba(0,255,170,0.6); }
+.text-glow-blue   { text-shadow: 0 0 20px rgba(0,212,255,0.6); }
+/* ─── Section base ──────────────────────────────────────── */
+.section {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Glass card ────────────────────────────────────────── */
+.glass {
+  background: rgba(15, 14, 42, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+}
+
+.glass-bright {
+  background: rgba(22, 21, 48, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-bright);
+}
+
+/* ─── Animated gradient border ──────────────────────────── */
+.gradient-border {
+  position: relative;
+  border-radius: var(--radius);
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: calc(var(--radius) + 1px);
+  padding: 1px;
+  background: linear-gradient(135deg, var(--purple), var(--blue-neon), var(--green-neon));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─── Floating particles bg ─────────────────────────────── */
+@keyframes particle-float {
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0.3; }
+  33%       { transform: translateY(-30px) translateX(15px) scale(1.1); opacity: 0.6; }
+  66%       { transform: translateY(15px) translateX(-10px) scale(0.9); opacity: 0.2; }
+}
+
+/* ─── Scanline effect ───────────────────────────────────── */
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* ─── Nav dot indicator ─────────────────────────────────── */
+@keyframes nav-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.4); opacity: 0.6; }
+}
+
+/* ─── Marquee ───────────────────────────────────────────── */
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ─── Utility ───────────────────────────────────────────── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Reduced motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
