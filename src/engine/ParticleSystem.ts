@@ -45,14 +45,14 @@ export class ParticleSystem {
   private phase: Float32Array;
   private delay: Float32Array;
 
-  constructor(n: number, head: number, readonly reduced: boolean) {
+  constructor(n: number, head: number, readonly reduced: boolean, private dotSize: { head: number; body: number }) {
     this.n = n;
     this.head = head;
     const F = () => new Float32Array(n);
     this.x = F();
     this.y = F();
     this.alpha = F();
-    this.size = F().fill(ENGINE.dotSize.body);
+    this.size = F().fill(dotSize.body);
     this.color = new Float32Array(n * 3);
     this.tumble = F();
     this.tumbleStart = F();
@@ -139,7 +139,7 @@ export class ParticleSystem {
       const lerp = this.reduced ? 1 : 0.08;
       this.alpha[i] += (at - this.alpha[i]) * lerp;
       for (let c = 0; c < 3; c++) this.color[i * 3 + c] += (t.color[i * 3 + c] - this.color[i * 3 + c]) * (this.reduced ? 1 : 0.1);
-      const base = i < this.head ? ENGINE.dotSize.head : ENGINE.dotSize.body;
+      const base = i < this.head ? this.dotSize.head : this.dotSize.body;
       this.size[i] += (base - this.size[i]) * 0.1;
     }
   }
@@ -233,7 +233,7 @@ export class ParticleSystem {
       a *= 1 - def.alphaDip * sv;
       this.alpha[i] = a;
       for (let c = 0; c < 3; c++) this.color[i * 3 + c] = this.sColor[i * 3 + c] + (t.color[i * 3 + c] - this.sColor[i * 3 + c]) * e;
-      const base = i < this.head ? ENGINE.dotSize.head : ENGINE.dotSize.body;
+      const base = i < this.head ? this.dotSize.head : this.dotSize.body;
       this.size[i] = base * Math.max(0.2, 1 + def.sizeBoost * sv);
     }
   }

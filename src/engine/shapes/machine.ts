@@ -101,6 +101,9 @@ interface Poly {
 }
 
 const UNIT_W = 2.0;
+/** On phones a narrower slice of the machine fills the width, so it reads larger; the outer parts bleed off. */
+const UNIT_W_PHONE = 1.6;
+const unitW = (ctx: ShapeBuildContext): number => (ctx.layout.wide ? UNIT_W : UNIT_W_PHONE);
 const UNIT_H = 1.44;
 /** Vertical offset (unit space) that centres the machine's drawing in its region. */
 const Y_SHIFT = 0.12;
@@ -262,7 +265,7 @@ export function buildMachine(ctx: ShapeBuildContext): BodyShape {
 
   // Screen edges in unit space, so the base rail can run off both sides.
   const R0 = ctx.region;
-  const ms0 = Math.min(R0.w / UNIT_W, R0.h / UNIT_H);
+  const ms0 = Math.min(R0.w / unitW(ctx), R0.h / UNIT_H);
   const ox0 = R0.x0 + R0.w / 2;
   const edgeL = Math.min(-1, -ox0 / ms0);
   const edgeR = Math.max(1, (ctx.layout.width - ox0) / ms0);
@@ -498,7 +501,7 @@ function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[]): BodySha
   }
 
   const R = ctx.region;
-  const ms = Math.min(R.w / UNIT_W, R.h / UNIT_H);
+  const ms = Math.min(R.w / unitW(ctx), R.h / UNIT_H);
   const ox = R.x0 + R.w / 2;
   // The machine's parts span about y -0.71..0.45 (rail lower), so shift down to centre it in the region.
   const oy = R.y0 + R.h / 2 + Y_SHIFT * ms;

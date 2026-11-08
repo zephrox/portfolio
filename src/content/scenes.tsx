@@ -21,7 +21,7 @@ export const scenes: SceneConfig[] = [
     layout: 'intro',
     shape: { kind: 'machine' },
     region: { x: 0.06, y: 0.04, w: 0.88, h: 0.66 },
-    regionMobile: { x: 0.04, y: 0.07, w: 0.92, h: 0.42 },
+    regionMobile: { x: 0, y: 0.08, w: 1, h: 0.42 },
     enter: 'zoomBack',
     Content: Intro,
   },

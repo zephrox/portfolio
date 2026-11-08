@@ -56,6 +56,9 @@ export class Director {
   private reduced = false;
   private ro: ResizeObserver | null = null;
   private resizeTimer = 0;
+  /** Particle budget, chosen once at load: desktop, or the smaller phone budget. */
+  private N: number = ENGINE.particles;
+  private H: number = ENGINE.headParticles;
 
   constructor(private o: DirectorOptions) {}
 
@@ -67,7 +70,11 @@ export class Director {
     this.sections.forEach((_, i) => this.setSceneState(i, i === 0 ? 'in' : 'out'));
     this.reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-    this.sys = new ParticleSystem(ENGINE.particles, ENGINE.headParticles, this.reduced);
+    const phone = canvas.clientWidth > 0 && canvas.clientWidth < LAYOUT.mobileBreakpoint;
+    const budget = phone ? ENGINE.mobile : { particles: ENGINE.particles, headParticles: ENGINE.headParticles, dotSize: ENGINE.dotSize };
+    this.N = budget.particles;
+    this.H = budget.headParticles;
+    this.sys = new ParticleSystem(this.N, this.H, this.reduced, budget.dotSize);
     try {
       this.renderer = new ParticleRenderer(canvas, this.sys);
     } catch {
@@ -186,8 +193,8 @@ export class Director {
 
   /** Builds heading + illustration targets for every section. Re-run on resize. */
   private build(): void {
-    const N = ENGINE.particles;
-    const H = ENGINE.headParticles;
+    const N = this.N;
+    const H = this.H;
     const body = N - H;
     const L = this.layout;
     this.targets = [];
@@ -215,7 +222,7 @@ export class Director {
   }
 
   private copyShape(shape: BodyShape, t: Target): void {
-    const H = ENGINE.headParticles;
+    const H = this.H;
     t.pos.set(shape.pos, H * 2);
     t.alpha.set(shape.alpha, H);
     if (shape.color) t.color.set(shape.color, H * 3);
@@ -223,7 +230,7 @@ export class Director {
 
   private flightContext(tr: Transition): FlightContext {
     const L = this.layout;
-    const H = ENGINE.headParticles;
+    const H = this.H;
     const from = this.shapes[tr.from];
     const to = this.shapes[tr.to];
     const anchor = from.anchor ?? to.anchor ?? { x: L.width / 2, y: L.height / 2 };

@@ -22,6 +22,12 @@ export const ENGINE = {
   lockUntil: 0.8,
   /** Cube edge length in CSS px. */
   dotSize: { head: 2.8, body: 3.3 },
+  /** Phones (narrower than LAYOUT.mobileBreakpoint at load) get a budget scaled to their smaller area. */
+  mobile: {
+    particles: 5500,
+    headParticles: 1200,
+    dotSize: { head: 2.2, body: 2.4 },
+  },
   /** Micro cubes: flat-shaded, three visible faces, slow tumble at rest and a turn during flights. */
   cube: {
     /** Point sprite size relative to the cube edge; must exceed √3 so rotated corners fit. */
