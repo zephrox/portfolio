@@ -23,7 +23,10 @@ type Part = Base &
     | { kind: 'rot'; cx: number; cy: number; w: number; ph: number }
     | { kind: 'osc'; cx: number; cy: number; amp: number; freq: number }
     | { kind: 'rack'; r: number; amp: number; freq: number }
-    | { kind: 'planet'; k: number }
+    | { kind: 'planet'; k: number; count: number; orbit: number; wCarrier: number; wSpin: number }
+    | { kind: 'geneva'; cx: number; cy: number; drive: Geneva }
+    | { kind: 'cam'; cx: number; cy: number; w: number; ph: number }
+    | { kind: 'follower'; cam: CamSpec }
     | { kind: 'static' }
     | { kind: 'circuit'; speed: number; phase: number }
     | { kind: 'belt'; speed: number }
@@ -32,6 +35,31 @@ type Part = Base &
     | { kind: 'rod'; k: number }
     | { kind: 'piston'; k: number }
   );
+
+/**
+ * A four-slot Geneva drive: a crank pin on an axle at (px, py) turning at `w` indexes the wheel a
+ * quarter turn once per revolution, and holds it still the rest of the time.
+ */
+interface Geneva {
+  px: number;
+  py: number;
+  /** Crank pin radius and centre distance (a = d·sin 45° for four slots). */
+  a: number;
+  d: number;
+  w: number;
+  ph: number;
+  /** Direction from the drive axle to the wheel centre. */
+  toWheel: number;
+}
+
+interface CamSpec {
+  cx: number;
+  cy: number;
+  w: number;
+  ph: number;
+  base: number;
+  lift: number;
+}
 
 interface Poly {
   part: number;
@@ -65,6 +93,94 @@ function circ(r: number, cx = 0, cy = 0, seg = 48): Pt[] {
   return o;
 }
 
+function arc(r: number, a0: number, a1: number, seg = 24): Pt[] {
+  const o: Pt[] = [];
+  for (let k = 0; k <= seg; k++) {
+    const a = a0 + ((a1 - a0) * k) / seg;
+    o.push([Math.cos(a) * r, Math.sin(a) * r]);
+  }
+  return o;
+}
+
+const wrap = (x: number): number => Math.atan2(Math.sin(x), Math.cos(x));
+
+/**
+ * Four-slot Geneva wheel (Maltese cross) centred at 0, slots along the axes. Between slots the rim
+ * is scalloped where the drive's locking disc rides, so the wheel stays locked while the pin is away.
+ */
+function genevaOutline(a: number, d: number, scallopR: number): Pt[] {
+  const b = d * Math.SQRT1_2;
+  const hw = 0.011;
+  const rIn = d - a - 0.005;
+  const rimAt = (t: number): number => {
+    const m = Math.round((t - Math.PI / 4) / (Math.PI / 2)) * (Math.PI / 2) + Math.PI / 4;
+    const proj = d * Math.cos(t - m);
+    const disc = proj * proj - d * d + scallopR * scallopR;
+    return disc > 0 ? Math.min(b, proj - Math.sqrt(disc)) : b;
+  };
+  const out: Pt[] = [];
+  const edge = Math.sqrt(b * b - hw * hw);
+  const half = Math.asin(hw / b);
+  for (let k = 0; k < 4; k++) {
+    const t0 = (k * Math.PI) / 2;
+    const c = Math.cos(t0);
+    const s = Math.sin(t0);
+    const loc = (x: number, y: number): Pt => [x * c - y * s, x * s + y * c];
+    out.push(loc(edge, -hw), loc(rIn, -hw), loc(rIn, hw), loc(edge, hw));
+    const ta = t0 + half;
+    const tb = t0 + Math.PI / 2 - half;
+    for (let q = 1; q < 24; q++) {
+      const t = ta + ((tb - ta) * q) / 24;
+      const r = rimAt(t);
+      out.push([Math.cos(t) * r, Math.sin(t) * r]);
+    }
+  }
+  out.push(out[0]);
+  return out;
+}
+
+/** Radius of the egg-shaped cam at local angle t (nose at t = 0). */
+function camRadius(cam: CamSpec, t: number): number {
+  const k = (1 + Math.cos(t)) / 2;
+  return cam.base + cam.lift * k * k;
+}
+
+function camOutline(cam: CamSpec, seg = 64): Pt[] {
+  const o: Pt[] = [];
+  for (let k = 0; k <= seg; k++) {
+    const t = (k / seg) * Math.PI * 2;
+    const r = camRadius(cam, t);
+    o.push([Math.cos(t) * r, Math.sin(t) * r]);
+  }
+  return o;
+}
+
+/**
+ * World rotation of the Geneva wheel at `time`. While the crank pin is within 45° of the line of
+ * centres it drives a slot (the classic atan2 relation); otherwise the wheel holds its last index.
+ * Assumes the drive turns with positive `w`.
+ */
+function genevaAngle(g: Geneva, time: number): number {
+  const wx = g.px + Math.cos(g.toWheel) * g.d;
+  const wy = g.py + Math.sin(g.toWheel) * g.d;
+  const psi = g.toWheel + Math.PI;
+  const slotDir = (alpha: number): number => {
+    const x = g.px + Math.cos(g.toWheel + alpha) * g.a - wx;
+    const y = g.py + Math.sin(g.toWheel + alpha) * g.a - wy;
+    return wrap(Math.atan2(y, x) - psi);
+  };
+  const lim = Math.PI / 4;
+  const r0 = slotDir(-lim);
+  const step = wrap(slotDir(lim) - r0);
+  const u = g.w * time + g.ph - g.toWheel;
+  const n = Math.floor((u + Math.PI) / (Math.PI * 2));
+  const alpha = u - n * Math.PI * 2;
+  let f = 0;
+  if (alpha >= lim) f = step;
+  else if (alpha > -lim) f = wrap(slotDir(alpha) - r0);
+  return psi + r0 + n * step + f;
+}
+
 export function buildMachine(ctx: ShapeBuildContext): BodyShape {
   const parts: Part[] = [];
   const polys: Poly[] = [];
@@ -81,9 +197,8 @@ export function buildMachine(ctx: ShapeBuildContext): BodyShape {
     c[1] + Math.sin(angle) * (rParent + rChild),
   ];
 
-  // Back layer: dotted orbit ring and circuit traces with travelling pulses.
-  let p = part({ kind: 'rot', cx: 0, cy: 0, w: 0.02, ph: 0, color: 'orange', depth: 0.5, alpha: 0.4 });
-  add(p, circ(0.54, 0, 0, 120), 0.45);
+  // Back layer: circuit traces with travelling pulses.
+  let p: number;
   const traces: [number, 'h' | 'v'][] = [
     [-2.7, 'h'], [-2.25, 'v'], [-1.35, 'v'], [-0.55, 'h'], [0.45, 'h'], [1.25, 'v'],
     [1.9, 'v'], [2.55, 'h'], [3.05, 'h'], [-1.0, 'v'], [0.95, 'v'], [-2.95, 'h'],
@@ -107,17 +222,32 @@ export function buildMachine(ctx: ShapeBuildContext): BodyShape {
   add(p, gear(0.31, 30, true));
   add(p, circ(0.355, 0, 0, 72), 0.5);
 
+  // Back planetary set: the ring gear's outer teeth act as its sun. Three dim planets roll
+  // inside a fixed annulus and pass behind gears B and D.
+  const backSun = 0.41;
+  const backAnnulus = 0.5;
+  const backPlanet = 0.045;
+  const wBackCarrier = (wRing * backSun) / (backSun + backAnnulus);
+  const wBackSpin = wBackCarrier * (1 - backAnnulus / backPlanet);
+  p = part({ kind: 'static', color: 'orange', depth: 0.5, alpha: 0.4 });
+  add(p, gear(0.53, 52, true), 0.3);
+  for (let k = 0; k < 3; k++) {
+    p = part({ kind: 'planet', k, count: 3, orbit: 0.455, wCarrier: wBackCarrier, wSpin: wBackSpin, color: 'orange', depth: 0.5, alpha: 0.4 });
+    add(p, gear(backPlanet, 6), 0.45);
+    add(p, circ(0.012, 0, 0, 10), 0.45);
+  }
+
   // Planetary set: sun + three planets around the lens.
   p = part({ kind: 'rot', cx: 0, cy: 0, w: -0.24, ph: 0, color: 'orange', depth: 1 });
   add(p, gear(0.15, 14));
   for (let k = 0; k < 3; k++) {
-    p = part({ kind: 'planet', k, color: 'orange', depth: 1 });
+    p = part({ kind: 'planet', k, count: 3, orbit: 0.225, wCarrier: 0.12, wSpin: 0.6, color: 'orange', depth: 1 });
     add(p, gear(0.075, 8));
     add(p, circ(0.025, 0, 0, 16));
     spokes(p, 0.025, 0.06, 3);
   }
 
-  // Lens, iris blades and pupil (the pupil follows the cursor).
+  // Lens, iris blades and a still pupil.
   p = part({ kind: 'static', color: 'white', depth: 1 });
   add(p, circ(0.115));
   add(p, circ(0.1));
@@ -164,6 +294,27 @@ export function buildMachine(ctx: ShapeBuildContext): BodyShape {
   add(p, gear(0.05, 6));
   add(p, circ(0.015, 0, 0, 12));
 
+  // Geneva drive (top right): a pinion off G3 turns a crank whose pin indexes a four-slot wheel
+  // a quarter turn about every 8 s, then the wheel rests.
+  const P = meshWith(G3, 0.05, 0.03, -1.0);
+  const wP = (-w3 * 0.05) / 0.03;
+  p = part({ kind: 'rot', cx: P[0], cy: P[1], w: wP, ph: 0, color: 'orange', depth: 1 });
+  add(p, gear(0.03, 5));
+  const genD = 0.12;
+  const genA = genD * Math.SQRT1_2;
+  const toWheel = -0.6;
+  // First tick about two seconds after load: the pin starts just short of engagement.
+  const genPh = toWheel - Math.PI / 4 - wP * 2;
+  const geneva: Geneva = { px: P[0], py: P[1], a: genA, d: genD, w: wP, ph: genPh, toWheel };
+  p = part({ kind: 'rot', cx: P[0], cy: P[1], w: wP, ph: genPh, color: 'orange', depth: 1 });
+  add(p, [[0, 0], [genA, 0]]);
+  add(p, circ(0.01, genA, 0, 12));
+  add(p, arc(0.055, Math.PI / 3, (5 * Math.PI) / 3), 0.6);
+  const GW: Pt = [P[0] + Math.cos(toWheel) * genD, P[1] + Math.sin(toWheel) * genD];
+  p = part({ kind: 'geneva', cx: GW[0], cy: GW[1], drive: geneva, color: 'orange', depth: 1 });
+  add(p, genevaOutline(genA, genD, 0.06));
+  add(p, circ(0.012, 0, 0, 12));
+
   // Gear D (left) with a pulley, a belt to pulley E, and a gear train down to a flywheel.
   const D: Pt = [0.6 * Math.cos(2.95), 0.6 * Math.sin(2.95)];
   const wD = (-wRing * 0.4) / 0.2;
@@ -193,6 +344,29 @@ export function buildMachine(ctx: ShapeBuildContext): BodyShape {
   add(p, circ(0.09));
   add(p, circ(0.025, 0, 0, 16));
   spokes(p, 0.025, 0.09, 8);
+
+  // Cam and follower (bottom left): two small pinions step down from the flywheel so the cam
+  // clears it; the egg-shaped cam lifts a roller follower in a fixed guide.
+  const Q1 = meshWith(FW, 0.12, 0.03, 0.1);
+  const wQ1 = (-wFW * 0.12) / 0.03;
+  p = part({ kind: 'rot', cx: Q1[0], cy: Q1[1], w: wQ1, ph: 0, color: 'orange', depth: 1 });
+  add(p, gear(0.03, 5));
+  const Q2 = meshWith(Q1, 0.03, 0.045, 0.9);
+  const wQ2 = (-wQ1 * 0.03) / 0.045;
+  p = part({ kind: 'rot', cx: Q2[0], cy: Q2[1], w: wQ2, ph: 0, color: 'orange', depth: 1 });
+  add(p, gear(0.045, 6));
+  const cam: CamSpec = { cx: Q2[0], cy: Q2[1], w: wQ2, ph: 0, base: 0.055, lift: 0.03 };
+  p = part({ kind: 'cam', cx: cam.cx, cy: cam.cy, w: cam.w, ph: cam.ph, color: 'orange', depth: 1 });
+  add(p, camOutline(cam));
+  // Follower drawn at its lowest-lift position; update() lowers it by the cam's extra radius.
+  const rollerR = 0.012;
+  const rollerY = cam.cy + cam.base + rollerR;
+  p = part({ kind: 'follower', cam, color: 'orange', depth: 1 });
+  add(p, circ(rollerR, cam.cx, rollerY, 12));
+  add(p, [[cam.cx, rollerY + rollerR], [cam.cx, rollerY + 0.08]]);
+  p = part({ kind: 'static', color: 'white', depth: 1, alpha: 0.35 });
+  add(p, [[cam.cx - 0.018, rollerY + 0.04], [cam.cx - 0.018, rollerY + 0.075]], 0.8);
+  add(p, [[cam.cx + 0.018, rollerY + 0.04], [cam.cx + 0.018, rollerY + 0.075]], 0.8);
 
   // Pistons in cylinders, driven by the crank on gear B.
   const crank = { B, wB, ph: 0.1, rc: 0.06, L: 0.32 };
@@ -341,9 +515,25 @@ function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[], ex: Extr
           s.v = q.r * q.amp * Math.sin(q.freq * time);
           break;
         case 'planet': {
-          const ca = 0.12 * time + (q.k * Math.PI * 2) / 3;
-          const a = 0.6 * time;
-          s.cx = Math.cos(ca) * 0.225; s.cy = Math.sin(ca) * 0.225; s.c = Math.cos(a); s.s = Math.sin(a);
+          const ca = q.wCarrier * time + (q.k * Math.PI * 2) / q.count;
+          const a = q.wSpin * time;
+          s.cx = Math.cos(ca) * q.orbit; s.cy = Math.sin(ca) * q.orbit; s.c = Math.cos(a); s.s = Math.sin(a);
+          break;
+        }
+        case 'geneva': {
+          const a = genevaAngle(q.drive, time);
+          s.cx = q.cx; s.cy = q.cy; s.c = Math.cos(a); s.s = Math.sin(a);
+          break;
+        }
+        case 'cam': {
+          const a = q.w * time + q.ph;
+          s.cx = q.cx; s.cy = q.cy; s.c = Math.cos(a); s.s = Math.sin(a);
+          break;
+        }
+        case 'follower': {
+          // Contact is straight below the cam axle (+y); find which part of the profile is there.
+          const cam = q.cam;
+          s.v = camRadius(cam, Math.PI / 2 - (cam.w * time + cam.ph)) - cam.base;
           break;
         }
         case 'iris': {
@@ -390,8 +580,13 @@ function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[], ex: Extr
         case 'rot':
         case 'osc':
         case 'planet':
+        case 'geneva':
+        case 'cam':
           ux = s.cx + a * s.c - b * s.s;
           uy = s.cy + a * s.s + b * s.c;
+          break;
+        case 'follower':
+          uy = b + s.v;
           break;
         case 'rack':
           ux = a + s.v;

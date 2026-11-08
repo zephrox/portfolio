@@ -99,7 +99,7 @@ Transition meanings:
 ## The machine (intro)
 
 About 11,000 particles. Unit space roughly 2.0 by 1.44, mapped to the intro region. Every part is orange unless noted:
-- Back layer (dimmer): dotted orbit ring, twelve circuit traces with warm-white pulses travelling outward, pads at their ends.
+- Back layer (dimmer): twelve circuit traces with warm-white pulses travelling outward, pads at their ends, and a second planetary set: a fixed toothed annulus around the ring gear with three small planets that roll between it and the ring gear's outer teeth (one lap takes about four minutes), passing behind gears B and D.
 - Ring gear with outer and inner teeth.
 - Planetary set: sun gear and three orbiting planets.
 - Central lens (warm white) with a six-blade iris (warm white) that slowly breathes, and a still pupil at its centre.
@@ -107,6 +107,8 @@ About 11,000 particles. Unit space roughly 2.0 by 1.44, mapped to the intro regi
 - Gear C with a chain of three small gears.
 - Gear D with a pulley and belt to a second pulley, and a gear driving a flywheel.
 - Rack and pinion across the top: the pinion rocks and slides the rack.
+- Geneva drive (top right): a pinion off the small gear chain turns a crank with a pin and a locking crescent. The four-slot wheel rests for about six seconds, then indexes a quarter turn over about two.
+- Cam and follower (bottom left): two small pinions step down from the flywheel to an egg-shaped cam that slowly lifts a roller follower in a fixed guide (warm white, dim).
 
 Nothing on the machine reacts to the mouse, the pupil included. Cursor repulsion is off for this scene. Gears mesh at plausible speed ratios. Nothing moves faster than a calm, steady rhythm.
 
