@@ -103,7 +103,7 @@ On phones (under 900 px) every layout becomes: illustration in the top 40%, text
 
 ## Motion
 
-Every particle is a micro cube (edge about 3 px) with its own orientation. Each cube shows up to three faces in flat tones of its colour, lit from the top left: no gradients, no glow. Cubes tumble very slowly at rest and turn a quarter to three quarters of a revolution during each flight. Reduced motion: no tumbling.
+Every particle is a tiny round dot (about 1.6 px on desktop, 1.4 px on phones), with an antialiased edge so it stays round at any pixel density. Drawings read like fine engraving or stipple. Desktop uses 22,000 dots (4,000 for headings); phones use 8,000 (1,600).
 
 Every transition has three beats: the old scene breaks apart, particles travel, the new scene assembles. Then the text arrives.
 

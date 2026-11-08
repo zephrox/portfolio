@@ -19,7 +19,7 @@ w = np.clip(w, 0, None)
 yy = np.linspace(0, 1, H)[:, None]
 w *= np.where(yy < 0.68, 1.0, np.clip((1 - yy) / 0.32, 0, 1) ** 1.6)
 w[(yy[:,0] > 0.68)[:,None].repeat(W,1)] *= 0.55
-P = 2600
+P = int(sys.argv[3]) if len(sys.argv) > 3 else 9000  # point count; more points suit smaller dots
 rng = np.random.default_rng(7)
 flat = w.ravel() / w.sum()
 idx = rng.choice(flat.size, P, replace=False, p=flat)

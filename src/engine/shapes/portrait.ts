@@ -40,11 +40,13 @@ export function buildPortrait(ctx: ShapeBuildContext): BodyShape {
     fy0 = H * 0.06;
   }
   const n = portrait?.n ?? 0;
+  // The face uses up to two passes over the stipple points but always leaves ~20% of the dots for the lens rings.
+  const faceCount = Math.min(n * 2, Math.floor(count * 0.8));
   const hcx = fx0 + fw * 0.5;
   const hcy = fy0 + fh * 0.4;
   const hr = fh * 0.5;
   for (let i = 0; i < count; i++) {
-    if (portrait && i < n * 2) {
+    if (portrait && i < faceCount) {
       const k = i % n;
       const j = i >= n ? 1.6 : 0;
       pos[i * 2] = fx0 + portrait.points[k * 3] * fw + (Math.random() - 0.5) * j;

@@ -1,7 +1,7 @@
 /** Tuning knobs for the particle engine. Change feel here, not inside the engine code. */
 export const ENGINE = {
-  particles: 14000,
-  headParticles: 3000,
+  particles: 22000,
+  headParticles: 4000,
   maxDpr: 2,
   /** Spring used while a scene is resting. */
   holdStiffness: 0.14,
@@ -14,7 +14,7 @@ export const ENGINE = {
   introDelay: [0.2, 1.0] as const,
   repelRadius: 75,
   repelForce: 3,
-  /** Fraction of a flight after which the next section's colour block wipes in, so cubes land on colour. */
+  /** Fraction of a flight after which the next section's colour block wipes in, so particles land on colour. */
   blockInAt: 0.3,
   /** Fraction of a transition after which the next section's text starts to appear. */
   revealAt: 0.62,
@@ -22,26 +22,13 @@ export const ENGINE = {
   headFadeMs: 900,
   /** Input is ignored until a transition is this far through. */
   lockUntil: 0.8,
-  /** Cube edge length in CSS px. */
-  dotSize: { head: 2.8, body: 3.3 },
+  /** Dot diameter in CSS px. Tiny dots need more of them for the drawings to stay legible. */
+  dotSize: { head: 1.4, body: 1.6 },
   /** Phones (narrower than LAYOUT.mobileBreakpoint at load) get a budget scaled to their smaller area. */
   mobile: {
-    particles: 5500,
-    headParticles: 1200,
-    dotSize: { head: 2.2, body: 2.4 },
-  },
-  /** Micro cubes: flat-shaded, three visible faces, slow tumble at rest and a turn during flights. */
-  cube: {
-    /** Point sprite size relative to the cube edge; must exceed √3 so rotated corners fit. */
-    sprite: 1.8,
-    /** Maximum idle tumble speed (rad/s), random per cube. */
-    idleSpin: 0.25,
-    /** Each cube turns this many revolutions (random in range) over a transition. */
-    flightTurns: [0.25, 0.75] as const,
-    /** Light direction (x right, y up, z toward the viewer) and the two shading terms. */
-    light: [-0.45, 0.6, 0.66] as const,
-    ambient: 0.3,
-    diffuse: 0.75,
+    particles: 8000,
+    headParticles: 1600,
+    dotSize: { head: 1.2, body: 1.4 },
   },
   drift: 0.8,
 } as const;
@@ -64,7 +51,7 @@ export const LAYOUT = {
   /** Where an illustration sits when a scene does not set its own region (fractions of the viewport). */
   desktopRegion: { x: 0.54, y: 0.14, w: 0.4, h: 0.74 },
   mobileRegion: { x: 0.06, y: 0.07, w: 0.88, h: 0.34 },
-  mobileBodyAlpha: 0.62,
+  mobileBodyAlpha: 1,
   /** Share of an illustration's dots spent on its faint back layer (desktop only), and that layer's opacity relative to the figure. */
   backShare: 0.15,
   backAlpha: 0.32,

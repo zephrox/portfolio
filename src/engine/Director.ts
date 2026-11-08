@@ -224,7 +224,7 @@ export class Director {
       const hp = headingPoints(this.heads[s], this.o.root);
       if (hp.length) fillTargets(pos, hp, 0, H, 2);
       else for (let i = 0; i < H; i++) { pos[i * 2] = Math.random() * L.width; pos[i * 2 + 1] = Math.random() * L.height; }
-      const bodyAlpha = (scene.bodyAlpha ?? 0.92) * (L.wide ? 1 : LAYOUT.mobileBodyAlpha);
+      const bodyAlpha = (scene.bodyAlpha ?? 1) * (L.wide ? 1 : LAYOUT.mobileBodyAlpha);
       const shape = buildShape(scene.shape, {
         layout: L, region: this.regionFor(s), count: body, alpha: bodyAlpha, assets: this.assets, backLayer: !scene.block,
       });
@@ -317,7 +317,7 @@ export class Director {
       const repel = this.o.scenes[s].shape.kind !== 'machine';
       sys.hold(this.targets[s], dt, this.time, this.pointer, headFade, repel);
     }
-    this.renderer.render(this.time);
+    this.renderer.render();
   }
 
   private updateScanline(tr: Transition, uu: number): void {

@@ -26,12 +26,8 @@ export class ParticleSystem {
   readonly size: Float32Array;
   /** rgb triples, used directly as the colour attribute. */
   readonly color: Float32Array;
-  /** Extra rotation (radians) each cube picks up during flights; the renderer adds its idle tumble. */
-  readonly tumble: Float32Array;
   /** Opacity heading particles settle at once the real heading is shown (a faint texture). */
   headRest = 0.1;
-  private tumbleStart: Float32Array;
-  private tumbleTurn: Float32Array;
 
   private vx: Float32Array;
   private vy: Float32Array;
@@ -56,9 +52,6 @@ export class ParticleSystem {
     this.alpha = F();
     this.size = F().fill(dotSize.body);
     this.color = new Float32Array(n * 3);
-    this.tumble = F();
-    this.tumbleStart = F();
-    this.tumbleTurn = F();
     this.vx = F();
     this.vy = F();
     this.sx = F();
@@ -167,9 +160,6 @@ export class ParticleSystem {
         depth: ctx.depthAt(i), rand: Math.random(),
       });
       this.stg[i] = Math.max(0, Math.min(1, plan.stagger));
-      const [t0, t1] = ENGINE.cube.flightTurns;
-      this.tumbleStart[i] = this.tumble[i];
-      this.tumbleTurn[i] = this.reduced ? 0 : (Math.random() < 0.5 ? -1 : 1) * (t0 + Math.random() * (t1 - t0)) * Math.PI * 2;
       this.mx[i] = plan.mx;
       this.my[i] = plan.my;
       this.vx[i] = 0;
@@ -228,7 +218,6 @@ export class ParticleSystem {
       }
       this.x[i] = x;
       this.y[i] = y;
-      this.tumble[i] = this.tumbleStart[i] + e * this.tumbleTurn[i];
       const target = i < this.head ? 0.95 : t.alpha[i];
       let a = this.sAlpha[i] + (target - this.sAlpha[i]) * e;
       if (i < this.head) a = Math.min(1, a + 0.4 * sv) * (1 - (1 - this.headRest / 0.95) * headFade);
