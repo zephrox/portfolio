@@ -96,6 +96,7 @@ Every transition has three beats: the old scene breaks apart, particles travel, 
 
 - Duration 2.6 to 3.6 s. Never faster than 2.4 s.
 - Particles leave and arrive in a staggered wave, never all at once.
+- At rest, every dot drifts a few pixels around its spot on a slow, divergence-free flow field (curl noise), so drawings breathe like ink in water without clumping. The machine drifts at a third of the strength so its gears stay precise. The field is randomised on each page load.
 - Shohoj Lipi's block wipes in (expo-out, 0.7 s) once 30% of the flight has passed, so the dots land on colour, and wipes away as the next transition starts.
 - Text arrives last: heading at about 62% of the transition, then each following element 150 ms apart. Heading particles land on the real heading's letters, then fade to a faint texture as the crisp text appears.
 - Easing: ease-in-out cubic for paths, expo-out for text. No bounce, no overshoot, no elastic.

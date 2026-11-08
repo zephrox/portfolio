@@ -93,6 +93,8 @@ export interface EngineScene {
   headColor: RGB;
   /** True when the scene has a colour block. */
   block: boolean;
+  /** Living-drift strength (1 = normal, 0 = still). The machine uses less so it stays precise. */
+  drift: number;
   enter: import('./transitions').TransitionName;
   region?: RegionFrac;
   regionMobile?: RegionFrac;

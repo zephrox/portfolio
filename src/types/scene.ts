@@ -40,6 +40,8 @@ export interface SceneConfig {
   blockMobile?: RegionFrac;
   /** True when the heading itself sits on the block (drawn in black), as the intro hook does. */
   headOnBlock?: boolean;
+  /** Living-drift strength for the illustration at rest (default 1). Lower it for precise drawings. */
+  drift?: number;
   /** Transition used to arrive at this section when scrolling forward. */
   enter: TransitionName;
   /** The copy. Each top-level element becomes one staggered reveal step. */

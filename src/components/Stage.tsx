@@ -20,6 +20,7 @@ function toEngine(s: SceneConfig): EngineScene {
     bodyColor: s.block ? INK : color,
     headColor: s.headOnBlock ? INK : color,
     block: Boolean(s.block),
+    drift: s.drift ?? 1,
     enter: s.enter,
     region: s.region,
     regionMobile: s.regionMobile,

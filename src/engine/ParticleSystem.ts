@@ -4,6 +4,43 @@ import type { Point, Target } from './types';
 
 export const ease = (x: number): number => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
+/**
+ * A smooth, divergence-free 2D flow field: the analytic curl of a sum of random sine waves,
+ * psi = sum a_k sin(k_k . p + w_k t + phi_k), velocity = (d psi / dy, -d psi / dx). Each wave pushes
+ * along its crests, and the sum swirls without ever bunching dots together. Waves are chosen once
+ * per page load, so every visit flows a little differently. Output is roughly unit magnitude.
+ */
+interface Wave { kx: number; ky: number; w: number; ph: number; a: number }
+const WAVES: Wave[] = [];
+let WAVE_NORM = 1;
+for (let k = 0; k < ENGINE.flow.waves; k++) {
+  const octave = Math.floor(k / 2);
+  const f = Math.pow(1.9, octave) * (0.8 + Math.random() * 0.4);
+  const th = Math.random() * Math.PI * 2;
+  WAVES.push({
+    kx: Math.cos(th) * f,
+    ky: Math.sin(th) * f,
+    w: (Math.random() < 0.5 ? -1 : 1) * (0.7 + Math.random() * 0.6) * Math.sqrt(f),
+    ph: Math.random() * Math.PI * 2,
+    a: 1 / f,
+  });
+}
+WAVE_NORM = 1 / Math.sqrt(WAVES.reduce((s, w) => s + (w.a * w.a * (w.kx * w.kx + w.ky * w.ky)) / 2, 0));
+
+/** Writes the flow at (x, y) (already scaled) and time t into out[0], out[1]. `seed` shifts every wave's phase. */
+export function flow(x: number, y: number, t: number, out: Float32Array, seed = 0): void {
+  let vx = 0;
+  let vy = 0;
+  for (let k = 0; k < WAVES.length; k++) {
+    const q = WAVES[k];
+    const c = q.a * Math.cos(q.kx * x + q.ky * y + q.w * t + q.ph + seed * (k + 1));
+    vx += q.ky * c;
+    vy -= q.kx * c;
+  }
+  out[0] = vx * WAVE_NORM;
+  out[1] = vy * WAVE_NORM;
+}
+
 export interface FlightContext {
   width: number;
   height: number;
@@ -40,7 +77,6 @@ export class ParticleSystem {
   private stg: Float32Array;
   private nz1: Float32Array;
   private nz2: Float32Array;
-  private phase: Float32Array;
   private delay: Float32Array;
 
   constructor(n: number, head: number, readonly reduced: boolean, private dotSize: { head: number; body: number }) {
@@ -63,12 +99,10 @@ export class ParticleSystem {
     this.stg = F();
     this.nz1 = F();
     this.nz2 = F();
-    this.phase = F();
     this.delay = F();
     for (let i = 0; i < n; i++) {
       this.nz1[i] = Math.random() * 2 - 1;
       this.nz2[i] = Math.random() * 2 - 1;
-      this.phase[i] = Math.random() * Math.PI * 2;
     }
   }
 
@@ -87,7 +121,16 @@ export class ParticleSystem {
   }
 
   /** Resting behaviour: spring toward the target, gentle drift, push away from the cursor. */
-  hold(t: Target, dt: number, time: number, pointer: Point | null, headFade: number, repel: boolean): void {
+  private fv = new Float32Array(2);
+
+  /**
+   * Resting behaviour: spring toward the target plus a living drift (`driftPx` is the flow field's
+   * amplitude in px for this scene; 0 holds still), and a push away from the cursor.
+   */
+  hold(t: Target, dt: number, time: number, pointer: Point | null, headFade: number, repel: boolean, driftPx = 0): void {
+    const fs = ENGINE.flow.scale;
+    const ft = time * ENGINE.flow.speed;
+    const fv = this.fv;
     const k = this.reduced ? 1 : 1 - Math.pow(1 - ENGINE.holdStiffness, dt * 60);
     const damp = Math.pow(ENGINE.holdDamping, dt * 60);
     const R = ENGINE.repelRadius;
@@ -99,8 +142,13 @@ export class ParticleSystem {
         tx = this.x[i];
         ty = this.y[i];
       } else {
-        tx = t.pos[i * 2] + Math.sin(time * 0.8 + this.phase[i]) * ENGINE.drift;
-        ty = t.pos[i * 2 + 1] + Math.cos(time * 0.7 + this.phase[i]) * ENGINE.drift;
+        tx = t.pos[i * 2];
+        ty = t.pos[i * 2 + 1];
+        if (driftPx > 0) {
+          flow(tx * fs, ty * fs, ft, fv);
+          tx += fv[0] * driftPx;
+          ty += fv[1] * driftPx;
+        }
       }
       if (this.reduced) {
         this.x[i] = tx;

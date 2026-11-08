@@ -30,7 +30,20 @@ export const ENGINE = {
     headParticles: 1600,
     dotSize: { head: 1.2, body: 1.4 },
   },
-  drift: 0.8,
+  /**
+   * Living drift: at rest every dot wanders around its spot following a slow, divergence-free flow
+   * field (the curl of a few random sine waves), so drawings breathe without clumping.
+   */
+  flow: {
+    /** Offset in CSS px at full strength (desktop, phones). */
+    amp: 3,
+    ampPhone: 2,
+    /** Spatial frequency (per px) and time scale of the field. */
+    scale: 0.0055,
+    speed: 0.35,
+    /** Number of sine waves summed; more waves give curlier, less regular motion. */
+    waves: 6,
+  },
 } as const;
 
 /** Scroll gesture thresholds. Raise them if chapters change too easily. */

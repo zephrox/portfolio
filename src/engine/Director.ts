@@ -315,7 +315,8 @@ export class Director {
     } else {
       const s = tr ? tr.from : this.cur;
       const repel = this.o.scenes[s].shape.kind !== 'machine';
-      sys.hold(this.targets[s], dt, this.time, this.pointer, headFade, repel);
+      const driftPx = this.reduced ? 0 : this.o.scenes[s].drift * (this.layout.wide ? ENGINE.flow.amp : ENGINE.flow.ampPhone);
+      sys.hold(this.targets[s], dt, this.time, this.pointer, headFade, repel, driftPx);
     }
     this.renderer.render();
   }
