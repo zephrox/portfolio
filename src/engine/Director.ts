@@ -285,7 +285,7 @@ export class Director {
       const repel = this.o.scenes[s].shape.kind !== 'machine';
       sys.hold(this.targets[s], dt, this.time, this.pointer, headFade, repel);
     }
-    this.renderer.render();
+    this.renderer.render(this.time);
   }
 
   private updateScanline(tr: Transition, uu: number): void {

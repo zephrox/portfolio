@@ -76,6 +76,8 @@ On phones (under 900 px) every layout becomes: illustration in the top 40%, text
 
 ## Motion
 
+Every particle is a micro cube (edge about 3 px) with its own orientation. Each cube shows up to three faces in flat tones of its colour, lit from the top left: no gradients, no glow. Cubes tumble very slowly at rest and turn a quarter to three quarters of a revolution during each flight. Reduced motion: no tumbling.
+
 Every transition has three beats: the old scene breaks apart, particles travel, the new scene assembles. Then the text arrives.
 
 - Duration 2.6 to 3.6 s. Never faster than 2.4 s.

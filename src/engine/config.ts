@@ -20,7 +20,21 @@ export const ENGINE = {
   headFadeMs: 900,
   /** Input is ignored until a transition is this far through. */
   lockUntil: 0.8,
-  dotSize: { head: 2.0, body: 2.3 },
+  /** Cube edge length in CSS px. */
+  dotSize: { head: 2.8, body: 3.3 },
+  /** Micro cubes: flat-shaded, three visible faces, slow tumble at rest and a turn during flights. */
+  cube: {
+    /** Point sprite size relative to the cube edge; must exceed √3 so rotated corners fit. */
+    sprite: 1.8,
+    /** Maximum idle tumble speed (rad/s), random per cube. */
+    idleSpin: 0.25,
+    /** Each cube turns this many revolutions (random in range) over a transition. */
+    flightTurns: [0.25, 0.75] as const,
+    /** Light direction (x right, y up, z toward the viewer) and the two shading terms. */
+    light: [-0.45, 0.6, 0.66] as const,
+    ambient: 0.3,
+    diffuse: 0.75,
+  },
   drift: 0.8,
 } as const;
 
