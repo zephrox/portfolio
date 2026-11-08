@@ -75,6 +75,8 @@ export class Director {
     this.N = budget.particles;
     this.H = budget.headParticles;
     this.sys = new ParticleSystem(this.N, this.H, this.reduced, budget.dotSize);
+    // On phones the text scrolls away, so heading particles fade out fully instead of leaving a texture.
+    if (phone) this.sys.headRest = 0;
     try {
       this.renderer = new ParticleRenderer(canvas, this.sys);
     } catch {
@@ -160,8 +162,11 @@ export class Director {
     if (!el) return;
     el.dataset.state = state;
     el.setAttribute('aria-hidden', state === 'in' ? 'false' : 'true');
-    if (state === 'in') el.removeAttribute('inert');
-    else el.setAttribute('inert', '');
+    if (state === 'in') {
+      el.removeAttribute('inert');
+      // Phones: a chapter is a scrolling page; always open it at the top.
+      el.scrollTop = 0;
+    } else el.setAttribute('inert', '');
   }
 
   private finish(): void {

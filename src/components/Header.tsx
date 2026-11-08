@@ -2,7 +2,7 @@ import { site } from '../content/site';
 
 export function Header() {
   return (
-    <>
+    <header className="header">
       <a className="brand" href="/">
         {site.name}
       </a>
@@ -13,6 +13,6 @@ export function Header() {
           </a>
         ))}
       </nav>
-    </>
+    </header>
   );
 }

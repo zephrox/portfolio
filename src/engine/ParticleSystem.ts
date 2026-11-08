@@ -28,6 +28,8 @@ export class ParticleSystem {
   readonly color: Float32Array;
   /** Extra rotation (radians) each cube picks up during flights; the renderer adds its idle tumble. */
   readonly tumble: Float32Array;
+  /** Opacity heading particles settle at once the real heading is shown (a faint texture). */
+  headRest = 0.1;
   private tumbleStart: Float32Array;
   private tumbleTurn: Float32Array;
 
@@ -135,7 +137,7 @@ export class ParticleSystem {
         this.y[i] += this.vy[i];
       }
       let at = time < this.delay[i] ? 0.25 : t.alpha[i];
-      if (i < this.head) at = 0.95 - 0.85 * headFade;
+      if (i < this.head) at = 0.95 - (0.95 - this.headRest) * headFade;
       const lerp = this.reduced ? 1 : 0.08;
       this.alpha[i] += (at - this.alpha[i]) * lerp;
       for (let c = 0; c < 3; c++) this.color[i * 3 + c] += (t.color[i * 3 + c] - this.color[i * 3 + c]) * (this.reduced ? 1 : 0.1);
@@ -229,7 +231,7 @@ export class ParticleSystem {
       this.tumble[i] = this.tumbleStart[i] + e * this.tumbleTurn[i];
       const target = i < this.head ? 0.95 : t.alpha[i];
       let a = this.sAlpha[i] + (target - this.sAlpha[i]) * e;
-      if (i < this.head) a = Math.min(1, a + 0.4 * sv) * (1 - 0.85 * headFade);
+      if (i < this.head) a = Math.min(1, a + 0.4 * sv) * (1 - (1 - this.headRest / 0.95) * headFade);
       a *= 1 - def.alphaDip * sv;
       this.alpha[i] = a;
       for (let c = 0; c < 3; c++) this.color[i * 3 + c] = this.sColor[i * 3 + c] + (t.color[i * 3 + c] - this.sColor[i * 3 + c]) * e;

@@ -18,7 +18,9 @@ export class ScrollInput {
   private acc = 0;
   private lastInput = 0;
   private touchY: number | null = null;
-  private skipTouch = false;
+  private touchTarget: EventTarget | null = null;
+  /** Decided on a touch gesture's first move: true when that gesture belongs to native page scrolling. */
+  private skipTouch: boolean | null = null;
   /** Set on commit; cleared by a pause in wheel input or a new touch. */
   private waitQuiet = false;
 
@@ -80,33 +82,53 @@ export class ScrollInput {
     } else this.emit(threshold);
   }
 
-  private inScrollableCopy(t: EventTarget | null): boolean {
+  /**
+   * On phones a chapter ([data-scene]) scrolls like a page. Native scrolling wins until the page is
+   * already at its end in the gesture's direction; only then does the gesture count toward a chapter.
+   */
+  private nativeScrollFirst(t: EventTarget | null, delta: number): boolean {
     let el = t as HTMLElement | null;
     while (el && el !== this.o.target) {
-      if (el.classList?.contains('copy') && el.scrollHeight > el.clientHeight + 2) return true;
+      if (el.hasAttribute?.('data-scene')) {
+        const room = el.scrollHeight - el.clientHeight;
+        if (room <= 2) return false;
+        return delta > 0 ? el.scrollTop < room - 2 : el.scrollTop > 2;
+      }
       el = el.parentElement;
     }
     return false;
   }
 
   private onWheel = (e: WheelEvent) => {
-    if (this.inScrollableCopy(e.target)) return;
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
-    this.push(e.deltaY * unit, INPUT.wheelThreshold);
+    const delta = e.deltaY * unit;
+    if (this.nativeScrollFirst(e.target, delta)) {
+      // The page scrolled. Its momentum must not run on into a chapter change once it hits the end.
+      this.acc = 0;
+      this.waitQuiet = true;
+      this.lastInput = performance.now();
+      this.emit(INPUT.wheelThreshold);
+      return;
+    }
+    this.push(delta, INPUT.wheelThreshold);
   };
 
   private onTouchStart = (e: TouchEvent) => {
-    this.skipTouch = this.inScrollableCopy(e.target);
+    this.touchTarget = e.target;
+    this.skipTouch = null;
     this.touchY = e.touches[0]?.clientY ?? null;
     this.acc = 0;
     this.waitQuiet = false;
   };
 
   private onTouchMove = (e: TouchEvent) => {
-    if (this.skipTouch || this.touchY === null) return;
+    if (this.touchY === null) return;
     const y = e.touches[0]?.clientY;
     if (y === undefined) return;
-    this.push(this.touchY - y, INPUT.touchThreshold);
+    const delta = this.touchY - y;
+    if (this.skipTouch === null && delta !== 0) this.skipTouch = this.nativeScrollFirst(this.touchTarget, delta);
+    if (this.skipTouch) return;
+    this.push(delta, INPUT.touchThreshold);
     this.touchY = y;
   };
 

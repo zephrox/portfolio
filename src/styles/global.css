@@ -11,6 +11,8 @@
   --gutter: clamp(24px, 6vw, 96px);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --reveal-step: 0.15s;
+  /* Phones: height of the illustration area above the text. Matches LAYOUT.mobileRegion. */
+  --phone-art: 46dvh;
 }
 
 *,
@@ -91,15 +93,24 @@ h2 {
 
 /* ---------- Header ---------- */
 
-.brand,
-.nav {
+.header {
   position: absolute;
-  top: 18px;
-  z-index: 2;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px var(--gutter) 0;
+  pointer-events: none;
+}
+
+.header > * {
+  pointer-events: auto;
 }
 
 .brand {
-  left: var(--gutter);
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -110,7 +121,6 @@ h2 {
 }
 
 .nav {
-  right: var(--gutter);
   display: flex;
   gap: 24px;
   font-size: 15px;
@@ -442,24 +452,42 @@ h2 {
 
 /* ---------- Phones: illustration on top, text at the bottom ---------- */
 
+/*
+ * Phones: each chapter is a page that scrolls. The illustration sits in the top of the stage
+ * (the particles stay put); the text panel starts below it and scrolls up over it like a sheet.
+ * The engine moves to the next chapter only once the page is scrolled to its end.
+ */
 @media (max-width: 899px) {
+  .header {
+    padding: 4px 16px;
+    background: var(--s-bg);
+    border-bottom: 3px solid var(--s-text);
+  }
   .scene {
-    align-items: flex-end !important;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch !important;
     justify-content: flex-start !important;
-    padding: 80px 20px 32px;
+    padding: var(--phone-art) 16px 28px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    scrollbar-width: none;
+  }
+  .scene::-webkit-scrollbar {
+    display: none;
   }
   .copy,
   .scene--bottom-left .copy,
   .scene--center-bottom .copy,
   .scene--intro .copy {
     max-width: 100%;
-    max-height: 54%;
-    overflow-y: auto;
-    touch-action: pan-y;
+    /* Pushes short chapters (the intro) to the bottom; collapses to 0 when the text is long. */
+    margin-top: auto;
+    flex-shrink: 0;
     text-align: left;
     align-items: flex-start;
-    scrollbar-width: thin;
-    scrollbar-color: var(--s-line) transparent;
+    background: var(--s-bg);
   }
   .scene--center-panel .copy {
     padding: 0;
