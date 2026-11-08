@@ -27,9 +27,9 @@ Pure black stage (`#000000`). Five energetic colours, defined only in `src/theme
 
 Rules:
 - **One colour per section.** All of a section's particles, its accent word, its primary button and its scan line use that colour. Never mix two section colours inside one section.
-- The **intro machine** is the one exception: it is drawn entirely in warm white, like an instrument, and orange is the intro's accent (the hook text and its particles). Depth comes from brightness (back layer dimmer), never from a second hue.
+- The **intro machine** is drawn entirely in warm white, like an instrument, and orange is the intro's accent (the hook text and its particles). Depth comes from brightness (back layer dimmer), never from a second hue.
 - Text is warm white (`--s-text`) and body grey (`--s-body`) on black. Colour is for accents, never for paragraphs.
-- **Colour blocks.** Each chapter has one solid block of its colour on the black stage, and its illustration is drawn on that block in black cubes ("ink"). Black cubes keep their three faces through opacity: the lit face lets more colour show through. Text never sits on a block, except the intro hook, which is set in black on its orange band.
+- **One colour block.** Shohoj Lipi (the language chapter) is the single exception to the black stage: a full-screen lime block with সহজ drawn on it in black dots behind the black text panel. Every other illustration is drawn in its section colour on black.
 - No gradients, glows or blurs. Shadows exist only as hard offsets with no blur, as part of the brutalist frames below.
 
 Current mapping (in `scenes.tsx`): intro orange (hook; the machine itself is white), hero red, science fair yellow, robots blue, faces red, language lime, shipping blue, next yellow.
@@ -69,20 +69,7 @@ Layout variants (`.scene--<name>`):
 
 Vary layouts between neighbouring sections so no two in a row feel the same.
 
-Colour blocks (fractions of the viewport, set in `scenes.tsx` as `block` and `blockMobile`):
-
-| Chapter | Desktop block | On it |
-|---|---|---|
-| Intro | orange band across the bottom third | the hook, in black (the white machine stays on black above) |
-| Hero | red right half | portrait |
-| Science fair | yellow right 60% | atom |
-| Robots | blue band across the bottom half | seismic traces |
-| Faces | red left half | face mesh |
-| Language | lime, full screen | সহজ behind the black text panel |
-| Shipping | blue top right | browser windows |
-| Next | yellow band across the top half | "Anjir / আনজির" |
-
-On phones every block fills the top 46% at full width (the intro's sits at the bottom, behind the hook). Each chapter is then a page that scrolls: the drawing on top, the framed text panel below it scrolling up over it. A swipe scrolls the page first and only moves to the next chapter once the page is at its end. New chapters open at the top.
+On phones each chapter is a page that scrolls: the drawing on top, the framed text panel below it scrolling up over it. Shohoj Lipi's block fills the top 46%.
 
 On desktop an illustration may extend a faint back layer across the stage (about 15% of its dots at about a third of its opacity): circuit traces running to the screen edges, a wider lens ring, a large outer orbit, extra seismic rows, a fourth window half off-screen. Back layers are part of the picture, never a pattern, and they stay clear of the text column. Phones show the figure only.
 
@@ -109,7 +96,7 @@ Every transition has three beats: the old scene breaks apart, particles travel, 
 
 - Duration 2.6 to 3.6 s. Never faster than 2.4 s.
 - Particles leave and arrive in a staggered wave, never all at once.
-- The old colour block wipes away as a transition starts; the new one wipes in (left to right, expo-out, 0.7 s) once 30% of the flight has passed, so the cubes land on colour.
+- Shohoj Lipi's block wipes in (expo-out, 0.7 s) once 30% of the flight has passed, so the dots land on colour, and wipes away as the next transition starts.
 - Text arrives last: heading at about 62% of the transition, then each following element 150 ms apart. Heading particles land on the real heading's letters, then fade to a faint texture as the crisp text appears.
 - Easing: ease-in-out cubic for paths, expo-out for text. No bounce, no overshoot, no elastic.
 - Input is ignored until a transition is 80% done.
