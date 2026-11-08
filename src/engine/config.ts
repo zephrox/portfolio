@@ -18,26 +18,22 @@ export const ENGINE = {
   revealAt: 0.62,
   /** How long the heading particles take to fade once the real heading is visible. */
   headFadeMs: 900,
-  /** Keyboard and buttons are ignored until an auto-played transition is this far through. */
+  /** Input is ignored until a transition is this far through. */
   lockUntil: 0.8,
   dotSize: { head: 2.0, body: 2.3 },
   drift: 0.8,
 } as const;
 
-/**
- * Scroll scrubbing. Wheel and touch drive the transition directly: scrolling this many
- * viewport heights plays one whole transition. Raise the fractions if chapters change too easily.
- */
+/** Scroll gesture thresholds. Raise them if chapters change too easily. */
 export const INPUT = {
-  /** Wheel scroll, in viewport heights, for one full transition. */
-  pageFraction: 1,
-  /** Finger travel, in viewport heights, for one full transition. */
-  touchPageFraction: 0.7,
-  /** A pause this long (ms) counts as letting go: the transition settles. */
-  settleIdleMs: 140,
-  /** On letting go, at or past this progress the transition completes; below it, it springs back. */
-  settleAt: 0.5,
-  /** After a transition completes, wheel input stays ignored until it has been quiet this long (ms). Swallows trackpad momentum. */
+  /** Accumulated wheel deltaY (px) needed to move one chapter. About one firm wheel notch or a decisive trackpad swipe. */
+  wheelThreshold: 150,
+  /** Finger travel (px) needed on touch screens. */
+  touchThreshold: 110,
+  /** After this long without input, the accumulated scroll starts to drain away. */
+  idleDecayMs: 180,
+  decayPerFrame: 0.86,
+  /** After a chapter change, the rest of that gesture is ignored until wheel input pauses this long (ms). Stops trackpad momentum skipping chapters. */
   cooldownMs: 300,
 } as const;
 

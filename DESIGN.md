@@ -82,10 +82,9 @@ Every transition has three beats: the old scene breaks apart, particles travel, 
 - Particles leave and arrive in a staggered wave, never all at once.
 - Text arrives last: heading at about 62% of the transition, then each following element 150 ms apart. Heading particles land on the real heading's letters, then fade to a faint texture as the crisp text appears.
 - Easing: ease-in-out cubic for paths, expo-out for text. No bounce, no overshoot, no elastic.
-- Scrolling scrubs the transition: one viewport height of wheel scroll (or a swipe of 70% of the screen) plays it fully, and the dots, iris, scan line and text follow the scroll both ways. The scroll cue shows the progress.
-- Letting go (a pause of about 140 ms, or lifting the finger) below 50% springs back to the current chapter; at 50% or more the transition plays to the end at its normal pace.
-- One gesture moves at most one chapter: after a transition completes, scroll input is ignored until it pauses for 300 ms, which swallows trackpad momentum.
-- Keys and the skip buttons auto-play a whole transition. They are ignored until an auto-played transition is 80% done.
+- Input is ignored until a transition is 80% done.
+- A small scroll does nothing. One deliberate gesture (about one firm wheel notch or a decisive swipe) moves one chapter, and the transition always plays through. The scroll cue shows the gesture building.
+- One gesture moves at most one chapter: after a chapter change, the rest of that gesture (including trackpad momentum) is ignored until the wheel pauses for 300 ms or the finger lifts.
 - Forward transitions are specific to the chapter (table above). Going back always uses a soft drift.
 - Load: particles start scattered and each flies in after a random 0.2 to 1 s delay.
 - Reduced motion: no flights, sections swap instantly, particles sit still.

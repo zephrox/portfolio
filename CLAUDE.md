@@ -37,11 +37,11 @@ src/
     Director.ts          Orchestrates sections, transitions, text reveal, input.
     ParticleSystem.ts    Particle state, hold (spring) and flight (planned path) behaviour.
     ParticleRenderer.ts  Three.js renderer for the particle arrays.
-    ScrollInput.ts       Wheel and touch to scrub deltas (one viewport = one transition); keyboard to whole chapters.
+    ScrollInput.ts       Wheel, touch and keyboard to deliberate next/previous commands (one gesture = one chapter).
     transitions.ts       Transition registry (zoom, orbit, shock, scan, ink, grid, collapse, drift).
     shapes/              Illustration builders (machine, portrait, orbits, seismic, mesh, text, windows).
     sampling.ts          Draw-to-points helpers, heading sampler.
-    config.ts            Tuning knobs: particle counts, springs, timing, scroll scrubbing, regions.
+    config.ts            Tuning knobs: particle counts, springs, timing, scroll thresholds, regions.
   styles/global.css      All styles. Layout variants are .scene--<name>.
 public/portrait.json     Stippled portrait points.
 reference/               The approved HTML prototype. Read it for behaviour, never import from it.
@@ -61,7 +61,7 @@ scripts/stipple.py       Portrait stippler (crop box is tuned to the current pho
 Edit hex values in `src/theme/tokens.ts`, or change a section's `color` name in `scenes.tsx`. Nothing else should need editing. If it does, that is a bug: fix the hard-coded value.
 
 **Tune feel**
-Change `engine/config.ts` (springs, timing, scroll scrubbing) or a transition's `duration` and `stagger` in `transitions.ts`.
+Change `engine/config.ts` (springs, timing, scroll thresholds) or a transition's `duration` and `stagger` in `transitions.ts`.
 
 ## How to work in this repo
 

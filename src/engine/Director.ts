@@ -1,5 +1,5 @@
 import { loadPortrait, waitForFonts } from './assets';
-import { ENGINE, INPUT, LAYOUT } from './config';
+import { ENGINE, LAYOUT } from './config';
 import { ParticleRenderer } from './ParticleRenderer';
 import { ParticleSystem, ease, type FlightContext } from './ParticleSystem';
 import { fillTargets, headingPoints, regionFromFrac } from './sampling';
@@ -19,27 +19,16 @@ export interface DirectorOptions {
 interface Transition {
   from: number;
   to: number;
-  dir: 1 | -1;
   def: TransitionDef;
-  /** Progress through the whole transition, pre-roll included (0..1). */
-  p: number;
-  /** 'auto' plays on its own (keyboard, buttons). 'scrub' follows wheel and touch. */
-  mode: 'auto' | 'scrub';
-  /** Where p is heading on its own: 1 completes, 0 springs back, null means input is driving it. */
-  settleTo: 0 | 1 | null;
+  t0: number;
   started: boolean;
   revealed: boolean;
-  fromHidden: boolean;
   ctx: FlightContext | null;
 }
 
-/** Fraction of progress before the old text fades when scrubbing, and the hysteresis around it. */
-const FROM_TEXT_OUT = 0.05;
-const TEXT_HYSTERESIS = 0.05;
-
 /**
- * Runs the story: builds particle targets for every section, turns input into chapter changes,
- * plays or scrubs transitions, and shows/hides each section's text at the right moment.
+ * Runs the story: builds particle targets for every section, listens for chapter changes,
+ * plays transitions, and shows/hides each section's text at the right moment.
  *
  * Sections are plain DOM: <section data-scene="i" data-state="in|out"> with one [data-head]
  * heading inside. The Director never renders UI; it only flips those attributes.
@@ -67,12 +56,6 @@ export class Director {
   private reduced = false;
   private ro: ResizeObserver | null = null;
   private resizeTimer = 0;
-  /** After a transition completes, scrub input is ignored until it pauses (momentum guard). */
-  private scrubBlocked = false;
-  private lastScrubAt = 0;
-  /** Reduced motion has no flights: scroll accumulates to one page, then the section swaps. */
-  private reducedAcc = 0;
-  private cue = -1;
 
   constructor(private o: DirectorOptions) {}
 
@@ -103,9 +86,9 @@ export class Director {
 
     this.input = new ScrollInput({
       target: root,
+      isLocked: () => this.isLocked(),
       onCommit: (dir) => this.go(dir),
-      onScrub: (delta) => this.scrub(delta),
-      onIdle: () => this.release(),
+      onProgress: (p) => root.style.setProperty('--scroll-progress', p.toFixed(3)),
     });
     this.input.attach();
     root.addEventListener('pointermove', this.onPointer);
@@ -139,92 +122,30 @@ export class Director {
     this.renderer?.dispose();
   }
 
-  /** Move one whole chapter forward (1) or back (-1), auto-played. Used by keys and buttons. */
+  /** Move one chapter forward (1) or back (-1). Safe to call from buttons. */
   go(dir: 1 | -1): void {
     if (!this.sections.length) return;
-    const tr = this.trans;
-    if (tr) {
-      if (tr.mode === 'scrub') {
-        // A key during a scrub finishes it (same direction) or sends it back (opposite).
-        tr.mode = 'auto';
-        tr.settleTo = dir === tr.dir ? 1 : 0;
-        return;
-      }
-      if (tr.p < ENGINE.lockUntil) return;
+    if (this.trans) {
+      if (this.isLocked()) return;
       this.finish();
     }
-    this.begin(dir, 'auto');
-  }
-
-  /** Wheel or touch moved by `delta` (fraction of a full transition, positive = forward). */
-  private scrub(delta: number): void {
-    if (!this.sections.length || delta === 0) return;
-    const now = performance.now();
-    if (this.scrubBlocked) {
-      const quiet = now - this.lastScrubAt >= INPUT.cooldownMs;
-      this.lastScrubAt = now;
-      if (!quiet) return;
-      this.scrubBlocked = false;
-    }
-    this.lastScrubAt = now;
-
-    if (this.reduced || !this.ready) {
-      if (Math.sign(delta) !== Math.sign(this.reducedAcc)) this.reducedAcc = 0;
-      this.reducedAcc += delta;
-      if (Math.abs(this.reducedAcc) >= 1) {
-        const dir = this.reducedAcc > 0 ? 1 : -1;
-        this.reducedAcc = 0;
-        this.scrubBlocked = true;
-        this.begin(dir, 'auto');
-      }
-      this.setCue(Math.abs(this.reducedAcc));
-      return;
-    }
-
-    let tr = this.trans;
-    if (!tr) {
-      if (!this.begin(delta > 0 ? 1 : -1, 'scrub')) return;
-      tr = this.trans;
-      if (!tr) return;
-    }
-    if (tr.mode === 'auto') return;
-    tr.settleTo = null;
-    tr.p = Math.min(1, tr.p + delta * tr.dir);
-    if (tr.p <= 0) this.cancel();
-  }
-
-  /** Input paused or the finger lifted: let the transition finish or spring back. */
-  private release(): void {
-    this.reducedAcc = 0;
-    if (this.reduced) this.setCue(0);
-    const tr = this.trans;
-    if (tr && tr.mode === 'scrub' && tr.settleTo === null) tr.settleTo = tr.p >= INPUT.settleAt ? 1 : 0;
-  }
-
-  /** Starts a transition toward the neighbouring chapter. Returns false at either end of the story. */
-  private begin(dir: 1 | -1, mode: Transition['mode']): boolean {
     const to = this.cur + dir;
-    if (to < 0 || to >= this.sections.length) return false;
+    if (to < 0 || to >= this.sections.length) return;
+    const name = dir > 0 ? this.o.scenes[to].enter : to === 0 ? 'zoomBack' : 'drift';
+    this.setSceneState(this.cur, 'out');
     if (this.reduced || !this.ready) {
-      this.setSceneState(this.cur, 'out');
       this.cur = to;
       this.setSceneState(to, 'in');
       this.headInAt = performance.now();
-      return false;
+      return;
     }
-    const name = dir > 0 ? this.o.scenes[to].enter : to === 0 ? 'zoomBack' : 'drift';
-    this.trans = {
-      from: this.cur, to, dir, def: transitions[name], p: 0, mode,
-      settleTo: mode === 'auto' ? 1 : null, started: false, revealed: false, fromHidden: false, ctx: null,
-    };
-    if (mode === 'auto') this.hideFrom(this.trans);
-    return true;
+    this.trans = { from: this.cur, to, def: transitions[name], t0: performance.now(), started: false, revealed: false, ctx: null };
   }
 
-  private hideFrom(tr: Transition): void {
-    if (tr.fromHidden) return;
-    tr.fromHidden = true;
-    this.setSceneState(tr.from, 'out');
+  private isLocked(): boolean {
+    const tr = this.trans;
+    if (!tr) return false;
+    return (performance.now() - tr.t0) / (tr.def.duration * 1000) < ENGINE.lockUntil;
   }
 
   private setSceneState(i: number, state: 'in' | 'out'): void {
@@ -240,31 +161,12 @@ export class Director {
     const tr = this.trans;
     if (!tr) return;
     this.cur = tr.to;
-    this.hideFrom(tr);
     if (!tr.revealed) {
       this.setSceneState(tr.to, 'in');
       this.headInAt = performance.now();
     }
     this.trans = null;
-    this.scrubBlocked = true;
     if (this.scanEl) this.scanEl.style.opacity = '0';
-  }
-
-  /** Abandons a transition at p = 0: every particle is back at its start, so hold() resumes cleanly. */
-  private cancel(): void {
-    const tr = this.trans;
-    if (!tr) return;
-    if (tr.revealed) this.setSceneState(tr.to, 'out');
-    if (tr.fromHidden) this.setSceneState(tr.from, 'in');
-    this.trans = null;
-    if (this.scanEl) this.scanEl.style.opacity = '0';
-  }
-
-  private setCue(p: number): void {
-    const v = Math.round(p * 1000) / 1000;
-    if (v === this.cue) return;
-    this.cue = v;
-    this.o.root.style.setProperty('--scroll-progress', v.toFixed(3));
   }
 
   private measure(): void {
@@ -336,47 +238,21 @@ export class Director {
     };
   }
 
-  /** Moves p on its own when auto-playing or settling, at the transition's normal pace. */
-  private advance(tr: Transition, seconds: number): void {
-    if (tr.settleTo === null) return;
-    const step = seconds / tr.def.duration;
-    tr.p = tr.settleTo > tr.p ? Math.min(1, tr.p + step) : Math.max(0, tr.p - step);
-  }
-
-  /** Text follows progress both ways: old text leaves early, new text arrives at revealAt. */
-  private updateText(tr: Transition, uu: number, now: number): void {
-    const leaving = tr.settleTo === 1 || (tr.settleTo === null && tr.p > FROM_TEXT_OUT);
-    if (leaving) this.hideFrom(tr);
-    else if (tr.fromHidden && tr.p < FROM_TEXT_OUT - TEXT_HYSTERESIS / 2) {
-      tr.fromHidden = false;
-      this.setSceneState(tr.from, 'in');
-    }
-    if (!tr.revealed && uu >= ENGINE.revealAt) {
-      tr.revealed = true;
-      this.setSceneState(tr.to, 'in');
-      this.headInAt = now;
-    } else if (tr.revealed && uu < ENGINE.revealAt - TEXT_HYSTERESIS) {
-      tr.revealed = false;
-      this.setSceneState(tr.to, 'out');
-    }
-  }
-
   private frame(now: number): void {
     const sys = this.sys;
     if (!sys || !this.renderer) return;
-    const raw = Math.max(0, (now - this.last) / 1000);
-    const dt = Math.min(0.05, raw || 0.016);
+    const dt = Math.min(0.05, (now - this.last) / 1000 || 0.016);
     this.last = now;
     this.time += dt;
     this.input?.tick(now);
 
     const tr = this.trans;
     let open = 0.25 + 0.1 * Math.sin(this.time * 0.6);
+    let u = 0;
     if (tr) {
-      this.advance(tr, Math.min(0.25, raw));
-      if (tr.def.irisOpen) open = tr.p < tr.def.preRoll ? open + (1 - open) * ease(tr.p / tr.def.preRoll) : 1;
+      u = (now - tr.t0) / (tr.def.duration * 1000);
+      if (tr.def.irisOpen) open = u < tr.def.preRoll ? open + (1 - open) * ease(u / tr.def.preRoll) : 1;
     }
-    if (!this.reduced) this.setCue(tr && tr.mode === 'scrub' ? tr.p : 0);
 
     const active = new Set<number>([this.cur]);
     if (tr) { active.add(tr.from); active.add(tr.to); }
@@ -389,24 +265,26 @@ export class Director {
     });
 
     const headFade = Math.min(1, (now - this.headInAt) / ENGINE.headFadeMs);
-    if (tr && (tr.started || tr.p >= tr.def.preRoll)) {
+    if (tr && u >= tr.def.preRoll) {
       if (!tr.started) {
         tr.ctx = this.flightContext(tr);
         sys.beginFlight(this.targets[tr.to], tr.def, tr.ctx, this.targets[tr.from]);
         tr.started = true;
       }
-      const uu = Math.max(0, Math.min(1, (tr.p - tr.def.preRoll) / (1 - tr.def.preRoll)));
-      this.updateText(tr, uu, now);
+      const uu = Math.min(1, (u - tr.def.preRoll) / (1 - tr.def.preRoll));
+      if (!tr.revealed && uu >= ENGINE.revealAt) {
+        tr.revealed = true;
+        this.setSceneState(tr.to, 'in');
+        this.headInAt = now;
+      }
       sys.flight(this.targets[tr.to], tr.def, uu, tr.revealed ? headFade : 0, tr.ctx!, this.targets[tr.from]);
       this.updateScanline(tr, uu);
+      if (u >= 1) this.finish();
     } else {
       const s = tr ? tr.from : this.cur;
       const repel = this.o.scenes[s].shape.kind !== 'machine';
       sys.hold(this.targets[s], dt, this.time, this.pointer, headFade, repel);
-      if (tr) this.updateText(tr, 0, now);
     }
-    if (tr && tr.p >= 1) this.finish();
-    else if (tr && tr.p <= 0 && tr.settleTo === 0) this.cancel();
     this.renderer.render();
   }
 

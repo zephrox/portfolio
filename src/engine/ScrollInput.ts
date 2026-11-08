@@ -2,24 +2,25 @@ import { INPUT } from './config';
 
 export interface ScrollInputOptions {
   target: HTMLElement;
-  /** Keyboard: one whole chapter forward (1) or back (-1). */
+  isLocked(): boolean;
   onCommit(dir: 1 | -1): void;
-  /** Wheel or touch movement as a fraction of one full transition. Positive is forward. */
-  onScrub(delta: number): void;
-  /** Wheel or touch input has stopped (a pause, or the finger lifted). */
-  onIdle(): void;
+  /** 0..1 while a gesture builds toward the threshold. Drives the scroll cue. */
+  onProgress(p: number): void;
 }
 
 /**
- * Turns wheel and touch into continuous scrub deltas (one viewport of scrolling = one whole
- * transition) and keyboard into whole-chapter commands. Wheel and touch inside a scrollable
- * `.copy` block scroll that text instead.
+ * Turns wheel, touch and keyboard input into deliberate "next / previous chapter" commands.
+ * A tiny scroll does nothing: input accumulates and drains away if the user stops.
+ * One gesture moves at most one chapter: after a commit, the rest of that gesture (including
+ * trackpad momentum) is ignored until the wheel goes quiet or the finger lifts.
  */
 export class ScrollInput {
+  private acc = 0;
   private lastInput = 0;
-  private idleSent = true;
   private touchY: number | null = null;
   private skipTouch = false;
+  /** Set on commit; cleared by a pause in wheel input or a new touch. */
+  private waitQuiet = false;
 
   constructor(private o: ScrollInputOptions) {}
 
@@ -28,7 +29,6 @@ export class ScrollInput {
     this.o.target.addEventListener('touchstart', this.onTouchStart, { passive: true });
     this.o.target.addEventListener('touchmove', this.onTouchMove, { passive: true });
     this.o.target.addEventListener('touchend', this.onTouchEnd);
-    this.o.target.addEventListener('touchcancel', this.onTouchEnd);
     window.addEventListener('keydown', this.onKey);
   }
 
@@ -37,26 +37,47 @@ export class ScrollInput {
     this.o.target.removeEventListener('touchstart', this.onTouchStart);
     this.o.target.removeEventListener('touchmove', this.onTouchMove);
     this.o.target.removeEventListener('touchend', this.onTouchEnd);
-    this.o.target.removeEventListener('touchcancel', this.onTouchEnd);
     window.removeEventListener('keydown', this.onKey);
   }
 
-  /** Called every frame: reports a pause once wheel input has been quiet for a moment. */
+  /** Called every frame to drain unfinished gestures. */
   tick(now: number): void {
-    if (this.idleSent || this.touchY !== null) return;
-    if (now - this.lastInput > INPUT.settleIdleMs) this.idle();
+    if (this.touchY !== null || this.acc === 0) return;
+    if (now - this.lastInput > INPUT.idleDecayMs) {
+      this.acc *= INPUT.decayPerFrame;
+      if (Math.abs(this.acc) < 1) this.acc = 0;
+      this.emit(INPUT.wheelThreshold);
+    }
   }
 
-  private idle() {
-    this.idleSent = true;
-    this.o.onIdle();
+  private emit(threshold: number) {
+    this.o.onProgress(Math.min(1, Math.abs(this.acc) / threshold));
   }
 
-  private scrub(px: number, fraction: number) {
-    const page = Math.max(1, this.o.target.clientHeight) * fraction;
-    this.lastInput = performance.now();
-    this.idleSent = false;
-    this.o.onScrub(px / page);
+  private push(delta: number, threshold: number) {
+    const now = performance.now();
+    if (this.waitQuiet) {
+      const quiet = now - this.lastInput >= INPUT.cooldownMs;
+      this.lastInput = now;
+      if (!quiet) return;
+      this.waitQuiet = false;
+    }
+    if (this.o.isLocked()) {
+      this.acc = 0;
+      this.lastInput = now;
+      this.emit(threshold);
+      return;
+    }
+    if (Math.sign(delta) !== Math.sign(this.acc)) this.acc = 0;
+    this.acc += delta;
+    this.lastInput = now;
+    if (Math.abs(this.acc) >= threshold) {
+      const dir = this.acc > 0 ? 1 : -1;
+      this.acc = 0;
+      this.waitQuiet = true;
+      this.emit(threshold);
+      this.o.onCommit(dir);
+    } else this.emit(threshold);
   }
 
   private inScrollableCopy(t: EventTarget | null): boolean {
@@ -70,27 +91,28 @@ export class ScrollInput {
 
   private onWheel = (e: WheelEvent) => {
     if (this.inScrollableCopy(e.target)) return;
-    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? this.o.target.clientHeight : 1;
-    this.scrub(e.deltaY * unit, INPUT.pageFraction);
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
+    this.push(e.deltaY * unit, INPUT.wheelThreshold);
   };
 
   private onTouchStart = (e: TouchEvent) => {
     this.skipTouch = this.inScrollableCopy(e.target);
     this.touchY = e.touches[0]?.clientY ?? null;
+    this.acc = 0;
+    this.waitQuiet = false;
   };
 
   private onTouchMove = (e: TouchEvent) => {
     if (this.skipTouch || this.touchY === null) return;
     const y = e.touches[0]?.clientY;
     if (y === undefined) return;
-    this.scrub(this.touchY - y, INPUT.touchPageFraction);
+    this.push(this.touchY - y, INPUT.touchThreshold);
     this.touchY = y;
   };
 
   private onTouchEnd = () => {
-    const wasScrubbing = this.touchY !== null && !this.skipTouch;
     this.touchY = null;
-    if (wasScrubbing && !this.idleSent) this.idle();
+    this.lastInput = performance.now();
   };
 
   private onKey = (e: KeyboardEvent) => {
@@ -101,6 +123,6 @@ export class ScrollInput {
     if (e.key === 'ArrowUp' || e.key === 'PageUp') dir = -1;
     if (!dir) return;
     e.preventDefault();
-    this.o.onCommit(dir);
+    if (!this.o.isLocked()) this.o.onCommit(dir);
   };
 }
