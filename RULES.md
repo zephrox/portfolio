@@ -13,7 +13,8 @@ Never add any of these. They are the patterns that make a site look AI-generated
 - A small badge, pill or label above a heading ("Introducing", "01 / About").
 - Tiny numbered section labels.
 - Hero metric layouts: one huge number with a small caption.
-- Identical card grids, nested cards, cards with a thick coloured left border.
+- Identical card grids, nested cards, cards with a thick coloured left border. The one exception is each chapter's single framed text panel (DESIGN.md, Brutalist frames).
+- Soft or blurred shadows of any kind. The only shadows allowed are hard offsets with zero blur on the brutalist frames.
 - Icon tiles stacked above headings.
 - Oversized italic serif headlines, cream or beige backgrounds.
 - Pulsing status dots, blinking cursors, auto-scrolling marquees.

@@ -13,6 +13,10 @@
   --reveal-step: 0.15s;
   /* Phones: height of the illustration area above the text. Matches LAYOUT.mobileRegion. */
   --phone-art: 46dvh;
+  /* Neo-brutalist frames: thick borders and hard offset shadows (never blurred). */
+  --bw: 3px;
+  --offset: 10px;
+  --offset-sm: 5px;
 }
 
 *,
@@ -42,8 +46,8 @@ a {
 
 a:focus-visible,
 button:focus-visible {
-  outline: 2px solid var(--section, var(--s-text));
-  outline-offset: 3px;
+  outline: var(--bw) solid var(--section, var(--s-text));
+  outline-offset: 4px;
 }
 
 p,
@@ -102,7 +106,9 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px var(--gutter) 0;
+  padding: 10px var(--gutter);
+  background: var(--s-bg);
+  border-bottom: var(--bw) solid var(--s-text);
   pointer-events: none;
 }
 
@@ -135,16 +141,26 @@ h2 {
   text-decoration: none;
 }
 
+.brand:hover,
+.brand:focus-visible,
+.nav a:hover,
+.nav a:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: var(--bw);
+  text-underline-offset: 6px;
+}
+
 /* ---------- Scroll cue: fills as a scroll gesture builds ---------- */
 
 .scroll-cue {
   position: absolute;
   right: 20px;
   top: 50%;
-  width: 2px;
+  width: var(--bw);
   height: 64px;
   margin-top: -32px;
-  background: var(--s-line);
+  background: var(--s-bg);
+  outline: 2px solid var(--s-bg);
   pointer-events: none;
 }
 
@@ -164,8 +180,7 @@ h2 {
   z-index: 5;
   min-height: 44px;
   padding: 0 18px;
-  border-radius: 999px;
-  font: 500 15px var(--font-sans);
+  font: 600 15px var(--font-sans);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -190,7 +205,7 @@ h2 {
 
 .skip--prev {
   right: 200px;
-  border: 1.5px solid var(--s-text);
+  border: var(--bw) solid var(--s-text);
   background: var(--s-bg);
   color: var(--s-text);
 }
@@ -211,11 +226,25 @@ h2 {
   transition-delay: 0s;
 }
 
+/* The text panel: the one framed container per chapter (black fill, thick rule, hard offset shadow). */
 .copy {
   display: flex;
   flex-direction: column;
   gap: 18px;
   max-width: 42%;
+  padding: 28px;
+  background: var(--s-bg);
+  border: var(--bw) solid var(--s-text);
+  box-shadow: var(--offset) var(--offset) 0 var(--section);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.scene[data-state='in'] .copy {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.5s ease, transform 0.7s var(--ease-out);
 }
 
 /* Every top-level child of .copy is one reveal step. */
@@ -247,6 +276,10 @@ h2 {
 .scene--intro .copy {
   max-width: 100%;
   align-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
 }
 
 .scene--left {
@@ -287,9 +320,7 @@ h2 {
 
 .scene--center-panel .copy {
   max-width: 640px;
-  background: var(--s-bg);
   padding: 32px 36px;
-  border-radius: 16px;
 }
 
 .scene--center-bottom {
@@ -347,8 +378,13 @@ h2 {
   line-height: 1.02;
 }
 
+/* The accented word sits on a solid bar of the section colour, like a marker stroke. */
 .accent {
-  color: var(--section);
+  background: var(--section);
+  color: var(--s-bg);
+  padding: 0 0.1em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .body {
@@ -393,9 +429,16 @@ h2 {
   text-decoration: none;
 }
 
-.link-arrow:hover {
+.link-arrow {
+  color: var(--s-text);
   text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration-color: var(--section);
+  text-decoration-thickness: var(--bw);
+  text-underline-offset: 6px;
+}
+
+.link-arrow:hover {
+  color: var(--section);
 }
 
 .button {
@@ -403,10 +446,18 @@ h2 {
   align-items: center;
   min-height: 48px;
   padding: 0 22px;
-  border-radius: 999px;
-  font-weight: 600;
+  border: var(--bw) solid var(--s-text);
+  box-shadow: var(--offset-sm) var(--offset-sm) 0 var(--s-text);
+  font-weight: 700;
   font-size: 17px;
   text-decoration: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Pressing a button pushes it into its shadow. */
+.button:active {
+  transform: translate(var(--offset-sm), var(--offset-sm));
+  box-shadow: 0 0 0 var(--s-text);
 }
 
 .button--primary {
@@ -415,7 +466,7 @@ h2 {
 }
 
 .button--secondary {
-  border: 1.5px solid var(--s-text);
+  background: var(--s-bg);
   color: var(--s-text);
 }
 
@@ -425,7 +476,8 @@ h2 {
   margin: 0;
   width: 180px;
   height: 104px;
-  border-radius: 10px;
+  border: var(--bw) solid var(--s-text);
+  box-shadow: var(--offset-sm) var(--offset-sm) 0 var(--section);
   overflow: hidden;
 }
 
@@ -438,7 +490,8 @@ h2 {
 }
 
 .evidence--empty {
-  border: 1px dashed var(--s-line);
+  border: var(--bw) dashed var(--s-line);
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -458,10 +511,11 @@ h2 {
  * The engine moves to the next chapter only once the page is scrolled to its end.
  */
 @media (max-width: 899px) {
+  :root {
+    --offset: 8px;
+  }
   .header {
     padding: 4px 16px;
-    background: var(--s-bg);
-    border-bottom: 3px solid var(--s-text);
   }
   .scene {
     display: flex;
@@ -487,11 +541,13 @@ h2 {
     flex-shrink: 0;
     text-align: left;
     align-items: flex-start;
-    background: var(--s-bg);
+    padding: 20px;
+  }
+  .scene--intro .copy {
+    padding: 0;
   }
   .scene--center-panel .copy {
-    padding: 0;
-    border-radius: 0;
+    padding: 20px;
   }
   .scene--top-split .copy {
     grid-template-columns: 1fr;
@@ -506,8 +562,10 @@ h2 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .copy,
   .copy > *,
-  .scene {
+  .scene,
+  .button {
     transition: none !important;
   }
 }

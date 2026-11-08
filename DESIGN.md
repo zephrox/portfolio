@@ -29,9 +29,20 @@ Rules:
 - **One colour per section.** All of a section's particles, its accent word, its primary button and its scan line use that colour. Never mix two section colours inside one section.
 - The **intro machine** is the one exception: it is drawn entirely in warm white, like an instrument, and orange is the intro's accent (the hook text and its particles). Depth comes from brightness (back layer dimmer), never from a second hue.
 - Text is warm white (`--s-text`) and body grey (`--s-body`) on black. Colour is for accents, never for paragraphs.
-- No gradients, glows, blurs or shadows anywhere.
+- No gradients, glows or blurs. Shadows exist only as hard offsets with no blur, as part of the brutalist frames below.
 
 Current mapping (in `scenes.tsx`): intro orange (hook; the machine itself is white), hero red, science fair yellow, robots blue, faces red, language lime, shipping blue, next yellow.
+
+## Brutalist frames
+
+The site is neo-brutalist on a black stage: thick rules, hard offset shadows, flat colour, sharp corners.
+- **Text panel**: the one framed container per chapter. Black fill, 3 px warm-white border, square corners, and a hard shadow offset 10 px down-right (8 px on phones) in the section colour. The intro hook has no panel.
+- **Accent word**: set on a solid bar of the section colour with black text, like a marker stroke.
+- **Buttons**: 3 px warm-white border with a 5 px hard warm-white shadow. Pressing pushes the button into its shadow. Primary is section-colour fill with black text; secondary is black with white text.
+- **Links**: a 3 px underline in the section colour.
+- **Evidence**: 3 px border with a 5 px hard shadow in the section colour; the empty placeholder keeps a thick dashed border and no shadow.
+- **Header**: a black bar with a 3 px warm-white rule under it.
+- Border width and offsets are the `--bw`, `--offset` and `--offset-sm` variables in `global.css`.
 
 ## Type
 
