@@ -22,16 +22,16 @@ Pure black stage (`#000000`). Five energetic colours, defined only in `src/theme
 | yellow | `#FFD60A` | curious, bright |
 | blue | `#2F6BFF` | engineering, precise |
 | lime | `#C8FF2E` | alive, new |
-| orange | `#FF5F1F` | electric, mechanical (the intro machine) |
+| orange | `#FF5F1F` | electric, mechanical (the intro's accent) |
 | white | `#F5F1EA` | warm white for text and machine details |
 
 Rules:
 - **One colour per section.** All of a section's particles, its accent word, its primary button and its scan line use that colour. Never mix two section colours inside one section.
-- The **intro machine** follows the same rule: every part is orange, with warm-white lens and iris details. Depth comes from brightness (back layer dimmer), never from a second hue.
+- The **intro machine** is the one exception: it is drawn entirely in warm white, like an instrument, and orange is the intro's accent (the hook text and its particles). Depth comes from brightness (back layer dimmer), never from a second hue.
 - Text is warm white (`--s-text`) and body grey (`--s-body`) on black. Colour is for accents, never for paragraphs.
 - No gradients, glows, blurs or shadows anywhere.
 
-Current mapping (in `scenes.tsx`): intro orange (machine and hook), hero red, science fair yellow, robots blue, faces red, language lime, shipping blue, next yellow.
+Current mapping (in `scenes.tsx`): intro orange (hook; the machine itself is white), hero red, science fair yellow, robots blue, faces red, language lime, shipping blue, next yellow.
 
 ## Type
 
@@ -65,7 +65,7 @@ On phones (under 900 px) every layout becomes: illustration in the top 40%, text
 
 | # | Section | Colour | Layout | Illustration | Arrives by |
 |---|---|---|---|---|---|
-| 0 | Intro: "Teaching machines to notice." | orange | intro | Machine | (start) |
+| 0 | Intro: "Teaching machines to notice." | white machine, orange hook | intro | Machine | (start) |
 | 1 | Hero: "Hi, I'm Anjir." | red | left | Stippled portrait inside a faint lens ring | zoom through the iris |
 | 2 | It started at a science fair | yellow | bottom-left | Three electron orbits | orbit |
 | 3 | Then I wanted things to move | blue | top-split | Seismic traces across the bottom | shock |
@@ -103,19 +103,18 @@ Transition meanings:
 
 ## The machine (intro)
 
-About 11,000 particles. Unit space roughly 2.0 by 1.44, mapped to the intro region. Every part is orange unless noted:
-- Back layer (dimmer): twelve circuit traces with warm-white pulses travelling outward, pads at their ends, and a second planetary set: a fixed toothed annulus around the ring gear with three small planets that roll between it and the ring gear's outer teeth (one lap takes about four minutes), passing behind gears B and D.
-- Ring gear with outer and inner teeth.
-- Planetary set: sun gear and three orbiting planets.
-- Central lens (warm white) with a six-blade iris (warm white) that slowly breathes, and a still pupil at its centre.
-- Gear B with a crank driving two pistons in cylinders (warm white, dim).
-- Gear C with a chain of three small gears.
-- Gear D with a pulley and belt to a second pulley, and a gear driving a flywheel.
-- Rack and pinion across the top: the pinion rocks and slides the rack.
-- Geneva drive (top right): a pinion off the small gear chain turns a crank with a pin and a locking crescent. The four-slot wheel rests for about six seconds, then indexes a quarter turn over about two.
-- Cam and follower (bottom left): two small pinions step down from the flywheel to an egg-shaped cam that slowly lifts a roller follower in a fixed guide (warm white, dim).
+About 11,000 particles, all warm white (the back layer dimmer). Unit space roughly 2.0 by 1.44, mapped to the intro region. Power flows like a real machine:
+- A motor (finned housing, coupling flange) turns a line shaft along the bottom, carried by three pillow-block bearings.
+- A worm on the line shaft drives the main gear (34 teeth, six spokes). The lens sits at its hub: a still lens ring, a six-blade iris that slowly breathes, and a still pupil.
+- Right train: G2, G3 and G4 step up to a small pinion with a crank, pin and locking crescent. The four-slot Geneva wheel (top centre) rests for about six seconds, then indexes a quarter turn over about two.
+- Lower right: G10 cranks a piston in a vertical cylinder through a long connecting rod.
+- A 1:1 bevel pair at the end of the line shaft turns a vertical spindle up to a flyball governor; its two balls orbit the spindle about once every nine seconds.
+- Left train: G5 (spoked, like a flywheel) drives G6 and G7. G7 cranks a crosshead sliding in horizontal guides. G5 also drives G8 and G9, and an egg-shaped cam on G9 pushes a roller follower in and out.
+- Back layer: a faint base rail at the machine's foot that runs to both screen edges, with feet up to the motor, bearings and bevel.
 
-Nothing on the machine reacts to the mouse, the pupil included. Cursor repulsion is off for this scene. Gears mesh at plausible speed ratios. Nothing moves faster than a calm, steady rhythm.
+Thirteen gears in all (G1 to G10, the Geneva pinion and the two bevels), plus the worm, two shafts, the Geneva wheel, cam, governor, piston and crank-slider. The top-left corner is left empty on purpose.
+
+Nothing on the machine reacts to the mouse. Gears mesh at plausible speed ratios. Nothing moves faster than a calm, steady rhythm.
 
 ## Copy voice
 

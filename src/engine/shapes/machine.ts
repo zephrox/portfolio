@@ -2,11 +2,17 @@ import { hexToRgb, palette, type ColorName, type RGB } from '../../theme/tokens'
 import type { BodyShape, Point, ShapeBuildContext } from '../types';
 
 /**
- * The intro machine. Everything is defined in "unit" coordinates (about -1..1 wide, -0.7..0.7 tall)
- * and mapped into the section's region. Each part has a kind that decides how it moves.
+ * The intro machine, drawn in white. Everything is defined in "unit" coordinates (about -1..1 wide,
+ * -0.72..0.72 tall, y down) and mapped into the section's region. Each part has a kind that decides
+ * how it moves.
  *
- * To add a part: push a Part in buildParts(), add its outline with add(), and if it is a new
- * kind, handle it in partState() and the per-particle switch in update().
+ * Power flows like a real machine: a motor turns the line shaft along the bottom; a worm on that
+ * shaft drives the main gear (with the lens at its hub); gear trains off the main gear drive a
+ * Geneva wheel, a crank-slider, a cam and a piston; a bevel pair at the shaft's end turns a vertical
+ * spindle up to a flyball governor.
+ *
+ * To add a part: push a Part in buildMachine(), add its outline with add(), and if it is a new
+ * kind, handle it in update()'s two switches.
  */
 
 type Pt = [number, number];
@@ -18,23 +24,22 @@ interface Base {
   alpha?: number;
 }
 
-type Part = Base &
-  (
-    | { kind: 'rot'; cx: number; cy: number; w: number; ph: number }
-    | { kind: 'osc'; cx: number; cy: number; amp: number; freq: number }
-    | { kind: 'rack'; r: number; amp: number; freq: number }
-    | { kind: 'planet'; k: number; count: number; orbit: number; wCarrier: number; wSpin: number }
-    | { kind: 'geneva'; cx: number; cy: number; drive: Geneva }
-    | { kind: 'cam'; cx: number; cy: number; w: number; ph: number }
-    | { kind: 'follower'; cam: CamSpec }
-    | { kind: 'static' }
-    | { kind: 'circuit'; speed: number; phase: number }
-    | { kind: 'belt'; speed: number }
-    | { kind: 'iris'; j: number }
-    | { kind: 'pupil' }
-    | { kind: 'rod'; k: number }
-    | { kind: 'piston'; k: number }
-  );
+/** A crank on an axle driving a slider along a straight line through a connecting rod. */
+interface Link {
+  cx: number;
+  cy: number;
+  w: number;
+  ph: number;
+  /** Crank pin radius. */
+  rc: number;
+  /** A point on the slider's line and the unit direction it slides along (away from the crank). */
+  sx: number;
+  sy: number;
+  ux: number;
+  uy: number;
+  /** Connecting rod length. */
+  L: number;
+}
 
 /**
  * A four-slot Geneva drive: a crank pin on an axle at (px, py) turning at `w` indexes the wheel a
@@ -61,6 +66,34 @@ interface CamSpec {
   lift: number;
 }
 
+/** Flyball governor: two balls on arms hung from a pivot on a vertical spindle, orbiting it. */
+interface Governor {
+  cx: number;
+  /** Pivot height, arm length, arm angle from the spindle, sleeve height. */
+  py: number;
+  L: number;
+  phi: number;
+  sleeveY: number;
+  w: number;
+  ph: number;
+}
+
+type Part = Base &
+  (
+    | { kind: 'rot'; cx: number; cy: number; w: number; ph: number }
+    | { kind: 'static' }
+    | { kind: 'iris'; j: number }
+    | { kind: 'geneva'; cx: number; cy: number; drive: Geneva }
+    | { kind: 'cam'; cx: number; cy: number; w: number; ph: number }
+    | { kind: 'follower'; cam: CamSpec; dx: number; dy: number }
+    /** Moving texture (worm threads, bevel teeth): one coordinate scrolls and wraps within [a0, a1]. */
+    | { kind: 'scroll'; axis: 0 | 1; v: number; a0: number; a1: number }
+    /** Slider body, drawn around the slider point at s = 0 and moved along the link's line. */
+    | { kind: 'slider'; link: Link }
+    | { kind: 'conrod'; link: Link }
+    | { kind: 'gov'; gov: Governor; role: 'ball' | 'arm' | 'link'; k: number }
+  );
+
 interface Poly {
   part: number;
   pts: Pt[];
@@ -69,6 +102,8 @@ interface Poly {
 
 const UNIT_W = 2.0;
 const UNIT_H = 1.44;
+/** Vertical offset (unit space) that centres the machine's drawing in its region. */
+const Y_SHIFT = 0.12;
 
 function gear(r: number, n: number, inward = false): Pt[] {
   const tip = inward ? r * 0.9 : r * 1.12;
@@ -93,13 +128,17 @@ function circ(r: number, cx = 0, cy = 0, seg = 48): Pt[] {
   return o;
 }
 
-function arc(r: number, a0: number, a1: number, seg = 24): Pt[] {
+function arc(r: number, a0: number, a1: number, seg = 24, cx = 0, cy = 0): Pt[] {
   const o: Pt[] = [];
   for (let k = 0; k <= seg; k++) {
     const a = a0 + ((a1 - a0) * k) / seg;
-    o.push([Math.cos(a) * r, Math.sin(a) * r]);
+    o.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
   }
   return o;
+}
+
+function rect(x0: number, y0: number, x1: number, y1: number): Pt[] {
+  return [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
 }
 
 const wrap = (x: number): number => Math.atan2(Math.sin(x), Math.cos(x));
@@ -181,6 +220,18 @@ function genevaAngle(g: Geneva, time: number): number {
   return psi + r0 + n * step + f;
 }
 
+/** Crank pin position and how far the slider has travelled along its line at `time`. */
+function linkState(k: Link, time: number): { px: number; py: number; s: number } {
+  const a = k.w * time + k.ph;
+  const px = k.cx + Math.cos(a) * k.rc;
+  const py = k.cy + Math.sin(a) * k.rc;
+  const dx = k.sx - px;
+  const dy = k.sy - py;
+  const du = dx * k.ux + dy * k.uy;
+  const disc = du * du - (dx * dx + dy * dy) + k.L * k.L;
+  return { px, py, s: -du + Math.sqrt(Math.max(0, disc)) };
+}
+
 export function buildMachine(ctx: ShapeBuildContext): BodyShape {
   const parts: Part[] = [];
   const polys: Poly[] = [];
@@ -196,275 +247,230 @@ export function buildMachine(ctx: ShapeBuildContext): BodyShape {
     c[0] + Math.cos(angle) * (rParent + rChild),
     c[1] + Math.sin(angle) * (rParent + rChild),
   ];
+  /** A gear on its own axle: toothed rim, hub, optional spokes. */
+  const gearPart = (c: Pt, r: number, teeth: number, w: number, nSpokes = 0, ph = 0) => {
+    const p = part({ kind: 'rot', cx: c[0], cy: c[1], w, ph, color: 'white', depth: 1 });
+    add(p, gear(r, teeth));
+    add(p, circ(Math.max(0.012, r * 0.18), 0, 0, 16));
+    if (nSpokes) {
+      add(p, circ(r * 0.78, 0, 0, 48), 0.6);
+      spokes(p, r * 0.18, r * 0.78, nSpokes);
+    }
+    return p;
+  };
+  const front = (alpha?: number) => part({ kind: 'static', color: 'white', depth: 1, alpha });
 
-  // Back layer: circuit traces with travelling pulses. Horizontal traces continue as faint
-  // dotted lines out to the screen edges, so the machine reads as part of a larger board.
+  // Screen edges in unit space, so the base rail can run off both sides.
   const R0 = ctx.region;
   const ms0 = Math.min(R0.w / UNIT_W, R0.h / UNIT_H);
   const ox0 = R0.x0 + R0.w / 2;
-  const edgeL = -ox0 / ms0;
-  const edgeR = (ctx.layout.width - ox0) / ms0;
-  let p: number;
-  const traces: [number, 'h' | 'v'][] = [
-    [-2.7, 'h'], [-2.25, 'v'], [-1.35, 'v'], [-0.55, 'h'], [0.45, 'h'], [1.25, 'v'],
-    [1.9, 'v'], [2.55, 'h'], [3.05, 'h'], [-1.0, 'v'], [0.95, 'v'], [-2.95, 'h'],
-  ];
-  for (const [a, m] of traces) {
-    const c = Math.cos(a);
-    const s = Math.sin(a);
-    const st: Pt = [c * 0.56, s * 0.56];
-    const md: Pt = [c * 0.66, s * 0.66];
-    const en: Pt = m === 'h' ? [Math.sign(c) * 0.98, md[1]] : [md[0], Math.sign(s) * 0.66];
-    p = part({ kind: 'circuit', color: 'orange', depth: 0.5, speed: 0.22 + Math.random() * 0.25, phase: Math.random() });
-    add(p, [st, md, en], 0.6);
-    p = part({ kind: 'static', color: 'orange', depth: 0.5 });
-    add(p, circ(0.014, en[0], en[1], 12), 0.6);
-    const edge = c > 0 ? edgeR : edgeL;
-    if (m === 'h' && Math.abs(edge) > 1.02) {
-      p = part({ kind: 'static', color: 'orange', depth: 0.5, alpha: 0.25 });
-      add(p, [[en[0] + Math.sign(c) * 0.02, en[1]], [edge, en[1]]], 0.12);
-    }
+  const edgeL = Math.min(-1, -ox0 / ms0);
+  const edgeR = Math.max(1, (ctx.layout.width - ox0) / ms0);
+
+  // ---- Line shaft (bottom), motor, worm ----
+  const shaftY = 0.3;
+  const wShaft = 0.68;
+  const wormStarts = 4;
+  const g1Teeth = 34;
+  const r1 = 0.27;
+  const w1 = (wShaft * wormStarts) / g1Teeth;
+
+  let p = front(0.7);
+  add(p, [[-0.76, shaftY - 0.012], [-0.1, shaftY - 0.012]], 0.6);
+  add(p, [[-0.76, shaftY + 0.012], [-0.1, shaftY + 0.012]], 0.6);
+  add(p, [[0.1, shaftY - 0.012], [0.76, shaftY - 0.012]], 0.6);
+  add(p, [[0.1, shaftY + 0.012], [0.76, shaftY + 0.012]], 0.6);
+
+  // Motor: finned housing, end cap and coupling flange.
+  p = front(0.8);
+  add(p, rect(-0.98, 0.23, -0.79, 0.37));
+  add(p, rect(-0.79, 0.25, -0.77, 0.35), 0.6);
+  for (let x = -0.955; x < -0.8; x += 0.03) add(p, [[x, 0.245], [x, 0.355]], 0.5);
+  add(p, [[-0.755, shaftY - 0.035], [-0.755, shaftY + 0.035]], 0.7);
+  add(p, [[-0.745, shaftY - 0.035], [-0.745, shaftY + 0.035]], 0.7);
+
+  // Pillow-block bearings carrying the shaft.
+  p = front(0.6);
+  for (const bx of [-0.45, 0.3, 0.62]) {
+    add(p, arc(0.03, Math.PI, Math.PI * 2, 16, bx, shaftY), 0.8);
+    add(p, [[bx - 0.03, shaftY], [bx - 0.03, 0.34], [bx - 0.055, 0.34], [bx - 0.055, 0.355], [bx + 0.055, 0.355], [bx + 0.055, 0.34], [bx + 0.03, 0.34], [bx + 0.03, shaftY]], 0.8);
   }
 
-  // Ring gear with outer and inner teeth.
-  const wRing = 0.06;
-  p = part({ kind: 'rot', cx: 0, cy: 0, w: wRing, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.4, 40));
-  add(p, gear(0.31, 30, true));
-  add(p, circ(0.355, 0, 0, 72), 0.5);
+  // Worm under the main gear: body plus threads that scroll with the main gear's rim.
+  p = front();
+  add(p, rect(-0.09, shaftY - 0.03, 0.09, shaftY + 0.03), 0.8);
+  const toothPitch = (Math.PI * 2 * r1) / g1Teeth;
+  p = part({ kind: 'scroll', axis: 0, v: -w1 * r1, a0: -0.09, a1: 0.09, color: 'white', depth: 1 });
+  for (let x = -0.09; x < 0.09; x += toothPitch) add(p, [[x, shaftY - 0.03], [x + 0.02, shaftY + 0.03]], 0.7);
 
-  // Back planetary set: the ring gear's outer teeth act as its sun. Three dim planets roll
-  // inside a fixed annulus and pass behind gears B and D.
-  const backSun = 0.41;
-  const backAnnulus = 0.5;
-  const backPlanet = 0.045;
-  const wBackCarrier = (wRing * backSun) / (backSun + backAnnulus);
-  const wBackSpin = wBackCarrier * (1 - backAnnulus / backPlanet);
-  p = part({ kind: 'static', color: 'orange', depth: 0.5, alpha: 0.4 });
-  add(p, gear(0.53, 52, true), 0.3);
-  for (let k = 0; k < 3; k++) {
-    p = part({ kind: 'planet', k, count: 3, orbit: 0.455, wCarrier: wBackCarrier, wSpin: wBackSpin, color: 'orange', depth: 0.5, alpha: 0.4 });
-    add(p, gear(backPlanet, 6), 0.45);
-    add(p, circ(0.012, 0, 0, 10), 0.45);
-  }
-
-  // Planetary set: sun + three planets around the lens.
-  p = part({ kind: 'rot', cx: 0, cy: 0, w: -0.24, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.15, 14));
-  for (let k = 0; k < 3; k++) {
-    p = part({ kind: 'planet', k, count: 3, orbit: 0.225, wCarrier: 0.12, wSpin: 0.6, color: 'orange', depth: 1 });
-    add(p, gear(0.075, 8));
-    add(p, circ(0.025, 0, 0, 16));
-    spokes(p, 0.025, 0.06, 3);
-  }
-
-  // Lens, iris blades and a still pupil.
-  p = part({ kind: 'static', color: 'white', depth: 1 });
+  // ---- Main gear G1 with the lens at its hub ----
+  gearPart([0, 0], r1, g1Teeth, w1);
+  p = part({ kind: 'rot', cx: 0, cy: 0, w: w1, ph: 0, color: 'white', depth: 1 });
+  add(p, circ(0.235, 0, 0, 72), 0.5);
+  spokes(p, 0.13, 0.235, 6);
+  p = front();
   add(p, circ(0.115));
   add(p, circ(0.1));
   for (let j = 0; j < 6; j++) {
     p = part({ kind: 'iris', j, color: 'white', depth: 1 });
     add(p, [[0, 0], [0.11, 0]]);
   }
-  p = part({ kind: 'pupil', color: 'orange', depth: 1 });
+  p = front();
   add(p, circ(0.022, 0, 0, 24));
   add(p, circ(0.01, 0, 0, 12));
 
-  // Gear B (right) with a crank that drives two pistons.
-  const B: Pt = [0.57 * Math.cos(-0.15), 0.57 * Math.sin(-0.15)];
-  const wB = (-wRing * 0.4) / 0.17;
-  p = part({ kind: 'rot', cx: B[0], cy: B[1], w: wB, ph: 0.1, color: 'orange', depth: 1 });
-  add(p, gear(0.17, 17));
-  add(p, circ(0.11));
-  add(p, circ(0.03, 0, 0, 16));
-  spokes(p, 0.03, 0.11, 5);
-  p = part({ kind: 'rot', cx: B[0], cy: B[1], w: wB, ph: 0.1, color: 'orange', depth: 1 });
-  add(p, [[-0.06, 0], [0.06, 0]]);
-  add(p, circ(0.013, -0.06, 0, 12));
-  add(p, circ(0.013, 0.06, 0, 12));
+  // ---- Right train: G2 -> G3 -> G4 -> Geneva pinion ----
+  const G1: Pt = [0, 0];
+  const r2 = 0.12;
+  const G2 = meshWith(G1, r1, r2, -0.6);
+  const w2 = (-w1 * r1) / r2;
+  gearPart(G2, r2, 15, w2, 5);
+  const r3 = 0.07;
+  const G3 = meshWith(G2, r2, r3, -1.4);
+  const w3 = (-w2 * r2) / r3;
+  gearPart(G3, r3, 9, w3);
+  const r4 = 0.1;
+  const G4 = meshWith(G3, r3, r4, -0.3);
+  const w4 = (-w3 * r3) / r4;
+  gearPart(G4, r4, 12, w4, 4);
 
-  // Gear C (top right) and a small chain of three gears.
-  const C = meshWith(B, 0.17, 0.09, -1.75);
-  const wC = (-wB * 0.17) / 0.09;
-  p = part({ kind: 'rot', cx: C[0], cy: C[1], w: wC, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.09, 9));
-  add(p, circ(0.025, 0, 0, 16));
-  spokes(p, 0.025, 0.07, 3);
-  const G1 = meshWith(C, 0.09, 0.05, -0.2);
-  const w1 = (-wC * 0.09) / 0.05;
-  p = part({ kind: 'rot', cx: G1[0], cy: G1[1], w: w1, ph: 0.2, color: 'orange', depth: 1 });
-  add(p, gear(0.05, 6));
-  add(p, circ(0.015, 0, 0, 12));
-  const G2 = meshWith(G1, 0.05, 0.04, -1.2);
-  const w2 = (-w1 * 0.05) / 0.04;
-  p = part({ kind: 'rot', cx: G2[0], cy: G2[1], w: w2, ph: 0.4, color: 'orange', depth: 1 });
-  add(p, gear(0.04, 5));
-  const G3 = meshWith(G2, 0.04, 0.05, 0.1);
-  const w3 = (-w2 * 0.04) / 0.05;
-  p = part({ kind: 'rot', cx: G3[0], cy: G3[1], w: w3, ph: 0.1, color: 'orange', depth: 1 });
-  add(p, gear(0.05, 6));
-  add(p, circ(0.015, 0, 0, 12));
-
-  // Geneva drive (top right): a pinion off G3 turns a crank whose pin indexes a four-slot wheel
-  // a quarter turn about every 8 s, then the wheel rests.
-  const P = meshWith(G3, 0.05, 0.03, -1.0);
-  const wP = (-w3 * 0.05) / 0.03;
-  p = part({ kind: 'rot', cx: P[0], cy: P[1], w: wP, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.03, 5));
+  // Geneva drive (top centre): pinion off G4, crank with pin and locking crescent, four-slot wheel.
+  const rP = 0.03;
+  const P = meshWith(G4, r4, rP, -2.0);
+  const wP = (-w4 * r4) / rP;
+  gearPart(P, rP, 5, wP);
   const genD = 0.12;
   const genA = genD * Math.SQRT1_2;
-  const toWheel = -0.6;
-  // First tick about two seconds after load: the pin starts just short of engagement.
+  const toWheel = -2.7;
   const genPh = toWheel - Math.PI / 4 - wP * 2;
   const geneva: Geneva = { px: P[0], py: P[1], a: genA, d: genD, w: wP, ph: genPh, toWheel };
-  p = part({ kind: 'rot', cx: P[0], cy: P[1], w: wP, ph: genPh, color: 'orange', depth: 1 });
+  p = part({ kind: 'rot', cx: P[0], cy: P[1], w: wP, ph: genPh, color: 'white', depth: 1 });
   add(p, [[0, 0], [genA, 0]]);
   add(p, circ(0.01, genA, 0, 12));
   add(p, arc(0.055, Math.PI / 3, (5 * Math.PI) / 3), 0.6);
   const GW: Pt = [P[0] + Math.cos(toWheel) * genD, P[1] + Math.sin(toWheel) * genD];
-  p = part({ kind: 'geneva', cx: GW[0], cy: GW[1], drive: geneva, color: 'orange', depth: 1 });
+  p = part({ kind: 'geneva', cx: GW[0], cy: GW[1], drive: geneva, color: 'white', depth: 1 });
   add(p, genevaOutline(genA, genD, 0.06));
   add(p, circ(0.012, 0, 0, 12));
 
-  // Gear D (left) with a pulley, a belt to pulley E, and a gear train down to a flywheel.
-  const D: Pt = [0.6 * Math.cos(2.95), 0.6 * Math.sin(2.95)];
-  const wD = (-wRing * 0.4) / 0.2;
-  p = part({ kind: 'rot', cx: D[0], cy: D[1], w: wD, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.2, 20));
-  add(p, circ(0.13));
-  spokes(p, 0.06, 0.13, 5);
-  p = part({ kind: 'rot', cx: D[0], cy: D[1], w: wD, ph: 0, color: 'orange', depth: 1 });
-  add(p, circ(0.06, 0, 0, 32));
-  const E: Pt = [-0.72, -0.42];
-  p = part({ kind: 'rot', cx: E[0], cy: E[1], w: wD, ph: 0, color: 'orange', depth: 0.8 });
-  add(p, circ(0.06, 0, 0, 32));
-  add(p, circ(0.02, 0, 0, 12));
-  spokes(p, 0.02, 0.06, 3);
-  const beltRes = beltPath(D, E, 0.06);
-  p = part({ kind: 'belt', color: 'orange', depth: 0.8, speed: 0.05 });
-  add(p, beltRes.outline);
-  const F = meshWith(D, 0.2, 0.07, 1.9);
-  const wF = (-wD * 0.2) / 0.07;
-  p = part({ kind: 'rot', cx: F[0], cy: F[1], w: wF, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.07, 8));
-  add(p, circ(0.02, 0, 0, 12));
-  const FW = meshWith(F, 0.07, 0.12, 0.6);
-  const wFW = (-wF * 0.07) / 0.12;
-  p = part({ kind: 'rot', cx: FW[0], cy: FW[1], w: wFW, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.12, 14));
-  add(p, circ(0.09));
-  add(p, circ(0.025, 0, 0, 16));
-  spokes(p, 0.025, 0.09, 8);
+  // ---- Lower right: G10 cranks a piston in a vertical cylinder ----
+  const r10 = 0.09;
+  const G10 = meshWith(G1, r1, r10, 0.3);
+  const w10 = (-w1 * r1) / r10;
+  gearPart(G10, r10, 11, w10, 3);
+  const pistonX = 0.62;
+  const piston: Link = { cx: G10[0], cy: G10[1], w: w10, ph: 0, rc: 0.05, sx: pistonX, sy: G10[1], ux: 0, uy: -1, L: 0.36 };
+  p = part({ kind: 'rot', cx: G10[0], cy: G10[1], w: w10, ph: 0, color: 'white', depth: 1 });
+  add(p, circ(0.012, piston.rc, 0, 10));
+  p = part({ kind: 'conrod', link: piston, color: 'white', depth: 1 });
+  add(p, [[0, 0], [1, 0]]);
+  p = part({ kind: 'slider', link: piston, color: 'white', depth: 1 });
+  add(p, rect(-0.03, -0.03, 0.03, 0.02));
+  add(p, circ(0.008, 0, 0, 8), 0.6);
+  p = front(0.4);
+  add(p, [[pistonX - 0.04, -0.3], [pistonX - 0.04, 0.03]], 0.8);
+  add(p, [[pistonX + 0.04, -0.3], [pistonX + 0.04, 0.03]], 0.8);
+  add(p, [[pistonX - 0.04, -0.3], [pistonX + 0.04, -0.3]], 0.8);
 
-  // Cam and follower (bottom left): two small pinions step down from the flywheel so the cam
-  // clears it; the egg-shaped cam lifts a roller follower in a fixed guide.
-  const Q1 = meshWith(FW, 0.12, 0.03, 0.1);
-  const wQ1 = (-wFW * 0.12) / 0.03;
-  p = part({ kind: 'rot', cx: Q1[0], cy: Q1[1], w: wQ1, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.03, 5));
-  const Q2 = meshWith(Q1, 0.03, 0.045, 0.9);
-  const wQ2 = (-wQ1 * 0.03) / 0.045;
-  p = part({ kind: 'rot', cx: Q2[0], cy: Q2[1], w: wQ2, ph: 0, color: 'orange', depth: 1 });
-  add(p, gear(0.045, 6));
-  const cam: CamSpec = { cx: Q2[0], cy: Q2[1], w: wQ2, ph: 0, base: 0.055, lift: 0.03 };
-  p = part({ kind: 'cam', cx: cam.cx, cy: cam.cy, w: cam.w, ph: cam.ph, color: 'orange', depth: 1 });
-  add(p, camOutline(cam));
-  // Follower drawn at its lowest-lift position; update() lowers it by the cam's extra radius.
-  const rollerR = 0.012;
-  const rollerY = cam.cy + cam.base + rollerR;
-  p = part({ kind: 'follower', cam, color: 'orange', depth: 1 });
-  add(p, circ(rollerR, cam.cx, rollerY, 12));
-  add(p, [[cam.cx, rollerY + rollerR], [cam.cx, rollerY + 0.08]]);
-  p = part({ kind: 'static', color: 'white', depth: 1, alpha: 0.35 });
-  add(p, [[cam.cx - 0.018, rollerY + 0.04], [cam.cx - 0.018, rollerY + 0.075]], 0.8);
-  add(p, [[cam.cx + 0.018, rollerY + 0.04], [cam.cx + 0.018, rollerY + 0.075]], 0.8);
+  // ---- Bevel pair (1:1) at the shaft's end turns the vertical spindle ----
+  const apexX = 0.86;
+  p = front(0.85);
+  add(p, [[0.76, 0.24], [0.8, 0.264], [0.8, 0.336], [0.76, 0.36], [0.76, 0.24]]);
+  add(p, [[0.8, 0.2], [0.824, 0.24], [0.896, 0.24], [0.92, 0.2], [0.8, 0.2]]);
+  const rBevel = 0.06;
+  p = part({ kind: 'scroll', axis: 1, v: wShaft * rBevel, a0: 0.25, a1: 0.35, color: 'white', depth: 1 });
+  for (let y = 0.25; y < 0.35; y += 0.016) add(p, [[0.765, y], [0.795, y]], 0.5);
+  p = part({ kind: 'scroll', axis: 0, v: wShaft * rBevel, a0: 0.81, a1: 0.91, color: 'white', depth: 1 });
+  for (let x = 0.81; x < 0.91; x += 0.016) add(p, [[x, 0.205], [x, 0.235]], 0.5);
 
-  // Pistons in cylinders, driven by the crank on gear B.
-  const crank = { B, wB, ph: 0.1, rc: 0.06, L: 0.32 };
-  const pistX = [B[0] - 0.075, B[0] + 0.075];
+  // ---- Vertical spindle and flyball governor (top right) ----
+  const pivotY = -0.55;
+  p = front(0.75);
+  add(p, [[apexX - 0.008, 0.2], [apexX - 0.008, pivotY]], 0.6);
+  add(p, [[apexX + 0.008, 0.2], [apexX + 0.008, pivotY]], 0.6);
+  add(p, rect(apexX - 0.06, -0.06, apexX + 0.06, -0.04), 0.6);
+  add(p, circ(0.016, apexX, pivotY, 12));
+  const gov: Governor = { cx: apexX, py: pivotY, L: 0.14, phi: (35 * Math.PI) / 180, sleeveY: -0.38, w: wShaft, ph: 0 };
+  p = front();
+  add(p, rect(apexX - 0.018, gov.sleeveY - 0.012, apexX + 0.018, gov.sleeveY + 0.012), 0.8);
   for (let k = 0; k < 2; k++) {
-    p = part({ kind: 'rod', k, color: 'orange', depth: 1 });
-    add(p, [[0, 0], [0.32, 0]]);
-    p = part({ kind: 'piston', k, color: 'orange', depth: 1 });
-    add(p, [[-0.035, -0.025], [0.035, -0.025], [0.035, 0.025], [-0.035, 0.025], [-0.035, -0.025]]);
-    p = part({ kind: 'static', color: 'white', depth: 1, alpha: 0.35 });
-    const px = pistX[k];
-    const y0 = B[1] + 0.21;
-    const y1 = B[1] + 0.43;
-    add(p, [[px - 0.045, y0], [px - 0.045, y1], [px + 0.045, y1], [px + 0.045, y0]], 0.8);
+    p = part({ kind: 'gov', gov, role: 'arm', k, color: 'white', depth: 1 });
+    add(p, [[0, 0], [1, 0]]);
+    p = part({ kind: 'gov', gov, role: 'link', k, color: 'white', depth: 1 });
+    add(p, [[0, 0], [1, 0]], 0.7);
+    p = part({ kind: 'gov', gov, role: 'ball', k, color: 'white', depth: 1 });
+    add(p, circ(0.03, 0, 0, 20));
   }
 
-  // Rack and pinion across the top: the pinion rocks back and forth and slides the rack.
-  const pin: Pt = [0.05, -0.56];
-  const pinR = 0.06;
-  const pinAmp = 0.9;
-  const pinFreq = 0.5;
-  p = part({ kind: 'osc', cx: pin[0], cy: pin[1], amp: pinAmp, freq: pinFreq, color: 'orange', depth: 1 });
-  add(p, gear(pinR, 8));
-  add(p, circ(0.018, 0, 0, 12));
-  p = part({ kind: 'rack', r: pinR, amp: pinAmp, freq: pinFreq, color: 'orange', depth: 1 });
-  const rack: Pt[] = [];
-  const rackY = pin[1] - pinR - 0.008;
-  for (let x = -0.28; x <= 0.38; x += 0.03) {
-    rack.push([x, rackY - 0.004], [x + 0.008, rackY + 0.012], [x + 0.018, rackY + 0.012], [x + 0.026, rackY - 0.004]);
-  }
-  add(p, rack);
-  add(p, [[-0.28, rackY - 0.05], [0.4, rackY - 0.05]]);
+  // ---- Left train: G5 (flywheel) -> G6 -> G7 crank-slider; G5 -> G8 -> G9 cam ----
+  const r5 = 0.16;
+  const G5 = meshWith(G1, r1, r5, 3.4);
+  const w5 = (-w1 * r1) / r5;
+  gearPart(G5, r5, 20, w5, 8);
+  const r6 = 0.07;
+  const G6 = meshWith(G5, r5, r6, -2.2);
+  const w6 = (-w5 * r5) / r6;
+  gearPart(G6, r6, 9, w6);
+  const r7 = 0.08;
+  const G7 = meshWith(G6, r6, r7, -1.7);
+  const w7 = (-w6 * r6) / r7;
+  gearPart(G7, r7, 10, w7, 3);
 
-  return finalize(ctx, parts, polys, { crank, pistX, beltRes });
+  // Crank-slider: crosshead running in horizontal guides to the left of G7.
+  const slider: Link = { cx: G7[0], cy: G7[1], w: w7, ph: 0, rc: 0.055, sx: G7[0], sy: G7[1], ux: -1, uy: 0, L: 0.24 };
+  p = part({ kind: 'rot', cx: G7[0], cy: G7[1], w: w7, ph: 0, color: 'white', depth: 1 });
+  add(p, circ(0.012, slider.rc, 0, 10));
+  p = part({ kind: 'conrod', link: slider, color: 'white', depth: 1 });
+  add(p, [[0, 0], [1, 0]]);
+  p = part({ kind: 'slider', link: slider, color: 'white', depth: 1 });
+  add(p, rect(-0.03, -0.024, 0.03, 0.024));
+  add(p, [[-0.03, 0], [-0.2, 0]], 0.7);
+  p = front(0.4);
+  add(p, [[-0.98, G7[1] - 0.034], [-0.7, G7[1] - 0.034]], 0.8);
+  add(p, [[-0.98, G7[1] + 0.034], [-0.7, G7[1] + 0.034]], 0.8);
+
+  const r8 = 0.09;
+  const G8 = meshWith(G5, r5, r8, 2.3);
+  const w8 = (-w5 * r5) / r8;
+  gearPart(G8, r8, 11, w8, 4);
+  const r9 = 0.05;
+  const G9 = meshWith(G8, r8, r9, 2.9);
+  const w9 = (-w8 * r8) / r9;
+  gearPart(G9, r9, 7, w9);
+  const cam: CamSpec = { cx: G9[0], cy: G9[1], w: w9, ph: 0, base: 0.06, lift: 0.03 };
+  p = part({ kind: 'cam', cx: cam.cx, cy: cam.cy, w: cam.w, ph: cam.ph, color: 'white', depth: 1 });
+  add(p, camOutline(cam));
+  // Follower to the left of the cam, drawn at its lowest-lift position; update() pushes it out.
+  const rollerR = 0.012;
+  const rollerX = cam.cx - cam.base - rollerR;
+  p = part({ kind: 'follower', cam, dx: -1, dy: 0, color: 'white', depth: 1 });
+  add(p, circ(rollerR, rollerX, cam.cy, 12));
+  add(p, [[rollerX - rollerR, cam.cy], [-0.99, cam.cy]], 0.8);
+  p = front(0.4);
+  add(p, [[-0.95, cam.cy - 0.02], [-0.88, cam.cy - 0.02]], 0.8);
+  add(p, [[-0.95, cam.cy + 0.02], [-0.88, cam.cy + 0.02]], 0.8);
+
+  // ---- Back layer: base rail across the whole stage, with feet up to the machine ----
+  const railY = 0.45;
+  p = part({ kind: 'static', color: 'white', depth: 0.5, alpha: 0.3 });
+  add(p, [[edgeL, railY], [edgeR, railY]], 0.15);
+  p = part({ kind: 'static', color: 'white', depth: 0.5, alpha: 0.4 });
+  for (const fx of [-0.95, -0.82, -0.45, 0.3, 0.62, 0.78]) add(p, [[fx, fx < -0.8 ? 0.37 : 0.355], [fx, railY]], 0.5);
+
+  return finalize(ctx, parts, polys);
 }
 
-function beltPath(D: Pt, E: Pt, r: number) {
-  const dx = E[0] - D[0];
-  const dy = E[1] - D[1];
-  const L = Math.hypot(dx, dy);
-  const nx = -dy / L;
-  const ny = dx / L;
-  const a0 = Math.atan2(ny, nx);
-  const pts: Pt[] = [[D[0] + nx * r, D[1] + ny * r], [E[0] + nx * r, E[1] + ny * r]];
-  for (let k = 1; k <= 16; k++) {
-    const a = a0 - (k / 16) * Math.PI;
-    pts.push([E[0] + Math.cos(a) * r, E[1] + Math.sin(a) * r]);
-  }
-  pts.push([D[0] - nx * r, D[1] - ny * r]);
-  for (let k = 1; k <= 16; k++) {
-    const a = a0 + Math.PI - (k / 16) * Math.PI;
-    pts.push([D[0] + Math.cos(a) * r, D[1] + Math.sin(a) * r]);
-  }
-  const cum = [0];
-  for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
-  const tot = cum[cum.length - 1];
-  const res = new Float32Array(800);
-  let seg = 1;
-  for (let q = 0; q < 400; q++) {
-    const d = (q / 400) * tot;
-    while (seg < cum.length - 1 && cum[seg] < d) seg++;
-    const f = (d - cum[seg - 1]) / (cum[seg] - cum[seg - 1] || 1);
-    res[q * 2] = pts[seg - 1][0] + (pts[seg][0] - pts[seg - 1][0]) * f;
-    res[q * 2 + 1] = pts[seg - 1][1] + (pts[seg][1] - pts[seg - 1][1]) * f;
-  }
-  return { outline: pts, samples: res };
-}
-
-interface Extras {
-  crank: { B: Pt; wB: number; ph: number; rc: number; L: number };
-  pistX: number[];
-  beltRes: { samples: Float32Array };
-}
-
-function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[], ex: Extras): BodyShape {
+function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[]): BodyShape {
   const n = ctx.count;
   const partOf = new Uint16Array(n);
   const la = new Float32Array(n);
   const lb = new Float32Array(n);
   const lf = new Float32Array(n);
-  for (const pl of polys) {
+  const P = polys.map((pl) => {
     const cum = [0];
     for (let k = 1; k < pl.pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pl.pts[k][0] - pl.pts[k - 1][0], pl.pts[k][1] - pl.pts[k - 1][1]));
-    (pl as Poly & { cum: number[]; len: number }).cum = cum;
-    (pl as Poly & { cum: number[]; len: number }).len = cum[cum.length - 1];
-  }
-  const P = polys as (Poly & { cum: number[]; len: number })[];
+    return { ...pl, cum, len: cum[cum.length - 1] };
+  });
   const totW = P.reduce((a, pl) => a + pl.len * pl.weight, 0);
   let idx = 0;
   P.forEach((pl, pi) => {
@@ -494,9 +500,9 @@ function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[], ex: Extr
   const R = ctx.region;
   const ms = Math.min(R.w / UNIT_W, R.h / UNIT_H);
   const ox = R.x0 + R.w / 2;
-  const oy = R.y0 + R.h / 2;
+  // The machine's parts span about y -0.71..0.45 (rail lower), so shift down to centre it in the region.
+  const oy = R.y0 + R.h / 2 + Y_SHIFT * ms;
   const rgb: RGB[] = parts.map((q) => hexToRgb(palette[q.color]));
-  const pulse = hexToRgb(palette.white);
 
   const pos = new Float32Array(n * 2);
   const alpha = new Float32Array(n);
@@ -504,47 +510,23 @@ function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[], ex: Extr
   const depth = new Float32Array(n);
   for (let j = 0; j < n; j++) depth[j] = parts[partOf[j]].depth;
 
-  type State = { cx: number; cy: number; c: number; s: number; ax: number; ay: number; bx: number; by: number; v: number };
-  const states: State[] = parts.map(() => ({ cx: 0, cy: 0, c: 1, s: 0, ax: 0, ay: 0, bx: 0, by: 0, v: 0 }));
+  type State = { cx: number; cy: number; c: number; s: number; ax: number; ay: number; bx: number; by: number; v: number; al: number };
+  const states: State[] = parts.map(() => ({ cx: 0, cy: 0, c: 1, s: 0, ax: 0, ay: 0, bx: 0, by: 0, v: 0, al: 1 }));
 
   // The machine never reacts to the cursor, so the pointer argument is ignored.
   const update = (time: number, _pointer: Point | null, open: number) => {
     parts.forEach((q, i) => {
       const s = states[i];
       switch (q.kind) {
-        case 'rot': {
-          const a = q.w * time + q.ph;
-          s.cx = q.cx; s.cy = q.cy; s.c = Math.cos(a); s.s = Math.sin(a);
-          break;
-        }
-        case 'osc': {
-          const a = q.amp * Math.sin(q.freq * time);
-          s.cx = q.cx; s.cy = q.cy; s.c = Math.cos(a); s.s = Math.sin(a);
-          break;
-        }
-        case 'rack':
-          s.v = q.r * q.amp * Math.sin(q.freq * time);
-          break;
-        case 'planet': {
-          const ca = q.wCarrier * time + (q.k * Math.PI * 2) / q.count;
-          const a = q.wSpin * time;
-          s.cx = Math.cos(ca) * q.orbit; s.cy = Math.sin(ca) * q.orbit; s.c = Math.cos(a); s.s = Math.sin(a);
-          break;
-        }
-        case 'geneva': {
-          const a = genevaAngle(q.drive, time);
-          s.cx = q.cx; s.cy = q.cy; s.c = Math.cos(a); s.s = Math.sin(a);
-          break;
-        }
+        case 'rot':
         case 'cam': {
           const a = q.w * time + q.ph;
           s.cx = q.cx; s.cy = q.cy; s.c = Math.cos(a); s.s = Math.sin(a);
           break;
         }
-        case 'follower': {
-          // Contact is straight below the cam axle (+y); find which part of the profile is there.
-          const cam = q.cam;
-          s.v = camRadius(cam, Math.PI / 2 - (cam.w * time + cam.ph)) - cam.base;
+        case 'geneva': {
+          const a = genevaAngle(q.drive, time);
+          s.cx = q.cx; s.cy = q.cy; s.c = Math.cos(a); s.s = Math.sin(a);
           break;
         }
         case 'iris': {
@@ -554,23 +536,36 @@ function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[], ex: Extr
           s.ax = Math.cos(ao) * 0.105; s.ay = Math.sin(ao) * 0.105; s.bx = Math.cos(ai) * ri; s.by = Math.sin(ai) * ri;
           break;
         }
-        case 'rod':
-        case 'piston': {
-          const cr = ex.crank;
-          const a = cr.wB * time + cr.ph + q.k * Math.PI;
-          const pinx = cr.B[0] + Math.cos(a) * cr.rc;
-          const piny = cr.B[1] + Math.sin(a) * cr.rc;
-          const px = ex.pistX[q.k];
-          const dx = px - pinx;
-          s.ax = pinx; s.ay = piny; s.bx = px; s.by = piny + Math.sqrt(Math.max(0, cr.L * cr.L - dx * dx));
+        case 'follower': {
+          // Contact faces the follower; find which part of the cam profile is there.
+          const cam = q.cam;
+          s.v = camRadius(cam, Math.atan2(q.dy, q.dx) - (cam.w * time + cam.ph)) - cam.base;
           break;
         }
-        case 'circuit':
-          s.v = ((time * q.speed + q.phase) % 1.4) - 0.2;
+        case 'scroll':
+          s.v = q.v * time;
           break;
-        case 'belt':
-          s.v = (time * q.speed) % 1;
+        case 'slider':
+        case 'conrod': {
+          const k = q.link;
+          const ls = linkState(k, time);
+          s.ax = ls.px; s.ay = ls.py;
+          s.bx = k.sx + k.ux * ls.s; s.by = k.sy + k.uy * ls.s;
           break;
+        }
+        case 'gov': {
+          const g = q.gov;
+          const th = g.w * time + g.ph + q.k * Math.PI;
+          const R2 = g.L * Math.sin(g.phi);
+          const bx = g.cx + Math.cos(th) * R2;
+          const by = g.py + g.L * Math.cos(g.phi);
+          // Balls nearer the viewer read brighter.
+          s.al = 0.7 + 0.3 * Math.sin(th);
+          if (q.role === 'ball') { s.cx = bx; s.cy = by; }
+          else if (q.role === 'arm') { s.ax = g.cx; s.ay = g.py; s.bx = bx; s.by = by; }
+          else { s.ax = g.cx; s.ay = g.sleeveY; s.bx = (g.cx + bx) / 2; s.by = (g.py + by) / 2; }
+          break;
+        }
         default:
           break;
       }
@@ -583,60 +578,56 @@ function finalize(ctx: ShapeBuildContext, parts: Part[], polys: Poly[], ex: Extr
       const b = lb[j];
       let ux = a;
       let uy = b;
-      let al = q.alpha ?? (q.depth < 1 ? 0.5 : 0.92);
-      let cr = rgb[qi][0];
-      let cg = rgb[qi][1];
-      let cb = rgb[qi][2];
+      let al = q.alpha ?? (q.depth < 1 ? 0.4 : 0.92);
       switch (q.kind) {
         case 'rot':
-        case 'osc':
-        case 'planet':
-        case 'geneva':
         case 'cam':
+        case 'geneva':
           ux = s.cx + a * s.c - b * s.s;
           uy = s.cy + a * s.s + b * s.c;
           break;
-        case 'follower':
-          uy = b + s.v;
-          break;
-        case 'rack':
-          ux = a + s.v;
-          break;
         case 'iris':
-        case 'rod': {
+        case 'conrod': {
           const f = lf[j];
           ux = s.ax + (s.bx - s.ax) * f;
           uy = s.ay + (s.by - s.ay) * f;
           break;
         }
-        case 'piston':
+        case 'slider':
           ux = s.bx + a;
-          uy = s.by + 0.02 + b;
+          uy = s.by + b;
           break;
-        case 'belt': {
-          const f = (lf[j] + s.v) % 1;
-          const k = Math.floor(f * 400) % 400;
-          ux = ex.beltRes.samples[k * 2];
-          uy = ex.beltRes.samples[k * 2 + 1];
+        case 'follower':
+          ux = a + q.dx * s.v;
+          uy = b + q.dy * s.v;
           break;
-        }
-        case 'circuit': {
-          const d = lf[j] - s.v;
-          const g = Math.exp(-(d * d) / 0.004);
-          al = 0.32 + 0.68 * g;
-          cr += (pulse[0] - cr) * g;
-          cg += (pulse[1] - cg) * g;
-          cb += (pulse[2] - cb) * g;
+        case 'scroll': {
+          const span = q.a1 - q.a0;
+          const c = q.axis === 0 ? a : b;
+          const m = q.a0 + ((((c - q.a0 + s.v) % span) + span) % span);
+          if (q.axis === 0) ux = m + (a - c);
+          else uy = m;
           break;
         }
+        case 'gov':
+          al *= s.al;
+          if (q.role === 'ball') {
+            ux = s.cx + a;
+            uy = s.cy + b;
+          } else {
+            const f = lf[j];
+            ux = s.ax + (s.bx - s.ax) * f;
+            uy = s.ay + (s.by - s.ay) * f;
+          }
+          break;
         default:
           break;
       }
       pos[j * 2] = ox + ux * ms;
       pos[j * 2 + 1] = oy + uy * ms;
-      color[j * 3] = cr;
-      color[j * 3 + 1] = cg;
-      color[j * 3 + 2] = cb;
+      color[j * 3] = rgb[qi][0];
+      color[j * 3 + 1] = rgb[qi][1];
+      color[j * 3 + 2] = rgb[qi][2];
       alpha[j] = al;
     }
   };
