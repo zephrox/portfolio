@@ -1,3 +1,4 @@
+import { evidence } from '../content/evidence';
 import { site } from '../content/site';
 import { Accent, Body, Evidence, Heading, LinkArrow, Row } from '../components/ui';
 
@@ -12,7 +13,7 @@ export function Language() {
       </Body>
       <Body>It reads aloud, marks syllable boundaries and shows exactly what changed, so the reader can always check the original.</Body>
       <Row>
-        <Evidence label="Screenshot: Shohoj Lipi" />
+        <Evidence {...evidence.shohojLipi} />
         <LinkArrow href={site.links.shohojLipi}>Try Shohoj Lipi</LinkArrow>
       </Row>
     </>

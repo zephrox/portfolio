@@ -1,3 +1,4 @@
+import { evidence } from '../content/evidence';
 import { site } from '../content/site';
 import { Accent, Body, Evidence, Heading, LinkArrow, Row } from '../components/ui';
 
@@ -12,7 +13,7 @@ export function Shipping() {
       </Body>
       <Body>Shipping taught me what papers don't: load times, failure cases and the person on the other side of the screen.</Body>
       <Row>
-        <Evidence label="Screenshot: Greensoft site" />
+        <Evidence {...evidence.greensoft} />
         <LinkArrow href={site.links.work}>See shipped work</LinkArrow>
       </Row>
     </>

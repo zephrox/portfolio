@@ -511,10 +511,22 @@ h2 {
 .evidence {
   margin: 0;
   width: 180px;
+}
+
+.evidence__frame {
   height: 104px;
   border: var(--bw) solid var(--s-text);
   box-shadow: var(--offset-sm) var(--offset-sm) 0 var(--section);
   overflow: hidden;
+}
+
+/* Stand-in images always say so, with their credit. */
+.evidence__note {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--s-muted);
 }
 
 .evidence img,
@@ -526,6 +538,7 @@ h2 {
 }
 
 .evidence--empty {
+  height: 104px;
   border: var(--bw) dashed var(--s-line);
   box-shadow: none;
   display: flex;

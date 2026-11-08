@@ -140,3 +140,5 @@ First person, plain words, short sentences. Specific numbers only when they are 
 ## Evidence
 
 Each chapter from 2 to 6 has one `<Evidence>` slot: a real photo, short muted clip or screenshot. Until Anjir supplies it, the slot shows a dashed placeholder with a label. Never use stock imagery or generated images.
+
+Temporary exception (Nov 2026, approved by Anjir): until his own media arrives, the slots show freely licensed placeholder photos from Wikimedia Commons that match each section's subject (a science fair presentation, a rescue rover, MIT's Kismet robot head, Tagore's Bengali handwriting, a website on a laptop). Each is visibly captioned "Placeholder" with its credit, so no visitor mistakes it for Anjir's work. Sources and licences: `CREDITS.md`. Swap them in `src/content/evidence.ts`.

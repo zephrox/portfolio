@@ -1,3 +1,4 @@
+import { evidence } from '../content/evidence';
 import { site } from '../content/site';
 import { Accent, Body, Evidence, Heading, LinkArrow, Row, Stack } from '../components/ui';
 
@@ -9,7 +10,7 @@ export function Robots() {
           Then I wanted things to <Accent>move</Accent>
         </Heading>
         <Row>
-          <Evidence label="Photo: DisasterX rover" />
+          <Evidence {...evidence.disasterX} />
           <LinkArrow href={site.links.disasterXPaper}>Read the paper</LinkArrow>
         </Row>
       </Stack>

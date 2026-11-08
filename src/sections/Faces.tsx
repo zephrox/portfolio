@@ -1,3 +1,4 @@
+import { evidence } from '../content/evidence';
 import { site } from '../content/site';
 import { Accent, Body, Evidence, Heading, LinkArrow, Row } from '../components/ui';
 
@@ -14,7 +15,7 @@ export function Faces() {
         That problem became my thesis: facial expression recognition that holds up when pose and lighting change, using anatomical disentanglement and contrastive learning. Along the way I co-authored work on reading emotion from EEG signals.
       </Body>
       <Row>
-        <Evidence label="Clip: CogniLink reacting" />
+        <Evidence {...evidence.cogniLink} />
         <LinkArrow href={site.links.cogniLink}>See CogniLink</LinkArrow>
       </Row>
     </>

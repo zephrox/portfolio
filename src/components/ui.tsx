@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { EvidenceItem } from '../content/evidence';
 
 /**
  * Small building blocks for section copy. Use these instead of styling raw tags,
@@ -67,16 +68,24 @@ export function ButtonLink({ href, children, variant = 'primary' }: { href: stri
 
 /**
  * Proof for a chapter: a real photo, clip or screenshot.
- * Without `src` it shows a labelled placeholder so the gap is obvious.
+ * Without `src` it shows a labelled dashed box so the gap is obvious. A stand-in image
+ * (`placeholder`) always carries a visible "Placeholder" note with its credit.
  */
-export function Evidence({ label, src, alt, video = false }: { label: string; src?: string; alt?: string; video?: boolean }) {
+export function Evidence({ label, src, alt, video = false, placeholder = false, credit }: EvidenceItem) {
   if (!src) return <figure className="evidence evidence--empty">[{label}]</figure>;
   return (
     <figure className="evidence">
-      {video ? (
-        <video src={src} muted loop autoPlay playsInline aria-label={alt ?? label} />
-      ) : (
-        <img src={src} alt={alt ?? label} loading="lazy" />
+      <div className="evidence__frame">
+        {video ? (
+          <video src={src} muted loop autoPlay playsInline aria-label={alt ?? label} />
+        ) : (
+          <img src={src} alt={alt ?? label} loading="lazy" />
+        )}
+      </div>
+      {placeholder && (
+        <figcaption className="evidence__note">
+          Placeholder{credit ? ` · ${credit}` : ''}
+        </figcaption>
       )}
     </figure>
   );
