@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Anjir Jaman</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@700&amp;family=Archivo:wght@400;500;600;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0;background:#000000}
+a{color:#FF8A3D}a:hover{color:#FFB27A}
+p{text-wrap:pretty}
+.scene{visibility:hidden;transition:visibility 0s linear .5s}
+.scene[data-state="in"]{visibility:visible;transition-delay:0s}
+.ln{opacity:0;transform:translateY(18px);transition:opacity .4s ease,transform .4s ease}
+.scene[data-state="in"] .ln{opacity:1;transform:none;transition:opacity .8s ease,transform 1s cubic-bezier(.16,1,.3,1)}
+.scene[data-state="in"] .ln:nth-child(2){transition-delay:.15s}
+.scene[data-state="in"] .ln:nth-child(3){transition-delay:.3s}
+.scene[data-state="in"] .ln:nth-child(4){transition-delay:.45s}
+.scene[data-state="in"] .ln:nth-child(5){transition-delay:.6s}
+.skip{position:absolute;left:-9999px;top:auto}
+.skip:focus{left:auto;right:24px;bottom:24px;z-index:5}
+.skip.prev:focus{right:200px}
+a:focus-visible,button:focus-visible{outline:2px solid #FF7A1A;outline-offset:3px}
+@media (max-width:899px){.scene{align-items:flex-end !important;justify-content:flex-start !important}.copy{max-width:100% !important;max-height:54%;overflow-y:auto;touch-action:pan-y;text-align:left !important}.grid2{grid-template-columns:1fr !important;gap:16px !important}.center-row{justify-content:flex-start !important}}
+@media (prefers-reduced-motion:reduce){.ln,.scene{transition:none !important}}
+</style>
+</helmet>
+<div ref="{{setRoot}}" onWheel="{{onWheel}}" onTouchStart="{{onTouchStart}}" onTouchEnd="{{onTouchEnd}}" onPointerMove="{{onMove}}" onPointerLeave="{{onLeave}}" style="position: relative; height: 100vh; min-height: 560px; overflow: hidden; background: #000000; color: #F5F1EA; font-family: 'Archivo', system-ui, sans-serif; touch-action: none">
+  <canvas ref="{{setCanvas}}" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block"></canvas>
+  <div data-scan="1" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 0; height: 2px; background: #FF4F7B; opacity: 0; pointer-events: none"></div>
+
+  <section class="scene" data-scene="0" data-state="in" style="position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding: 96px clamp(24px, 6vw, 96px) clamp(48px, 9vh, 96px); box-sizing: border-box">
+    <div class="copy" style="max-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center">
+      <p class="ln" data-head="1" style="margin: 0; font-size: clamp(44px, 5.6vw, 92px); line-height: 1; font-weight: 800; color: #FF7A1A; letter-spacing: -0.01em">Teaching machines to notice.</p>
+      <p class="ln" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #A8A29A">Scroll to start</p>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="1" data-state="out" style="position: absolute; inset: 0; display: flex; align-items: center; padding: 96px clamp(24px, 6vw, 96px) 64px; box-sizing: border-box">
+    <div class="copy" style="max-width: 42%; display: flex; flex-direction: column; gap: 22px">
+      <h1 class="ln" data-head="1" style="margin: 0; font-size: clamp(56px, 7vw, 112px); line-height: 0.95; font-weight: 800; letter-spacing: -0.01em">Hi, I'm <span style="color: #FF7A1A">Anjir</span>.</h1>
+      <p class="ln" style="margin: 0; font-size: clamp(20px, 1.7vw, 24px); line-height: 1.5; color: #E7E1D8; max-width: 34ch">I'm a developer and machine learning researcher from Bangladesh. I build models that read faces and Bangla, then ship them as software people use.</p>
+      <p class="ln" style="margin: 0; font-size: 17px; line-height: 1.6; color: #A8A29A; max-width: 40ch">Grab a cup of tea. The story takes about two minutes.</p>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="2" data-state="out" style="position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 96px clamp(24px, 6vw, 96px) clamp(40px, 7vh, 72px); box-sizing: border-box">
+    <div class="copy" style="max-width: 36%; display: flex; flex-direction: column; gap: 18px">
+      <h2 class="ln" data-head="1" style="margin: 0; font-size: clamp(38px, 3.8vw, 60px); line-height: 1.02; font-weight: 800">It started at a <span style="color: #FFC531">science fair</span></h2>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">Before I trained a single model, I helped found the Barguna Science Society and organized its science fair. That was where I first learned that an idea only counts once someone else understands it.</p>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">Later, at AIUB, the same habit earned me a poster presentation award from the Department of Physics.</p>
+      <figure class="ln" style="margin: 0; width: 200px; height: 112px; border: 1px dashed #4A4A4A; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.4; color: #8E8E8E; text-align: center">[Photo: the science fair]</figure>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="3" data-state="out" style="position: absolute; inset: 0; display: flex; align-items: flex-start; padding: 104px clamp(24px, 6vw, 96px) 48px; box-sizing: border-box">
+    <div class="copy grid2" style="max-width: 1120px; width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px">
+      <div class="ln" style="display: flex; flex-direction: column; gap: 20px">
+        <h2 data-head="1" style="margin: 0; font-size: clamp(38px, 3.8vw, 60px); line-height: 1.02; font-weight: 800">Then I wanted things to <span style="color: #3D6BFF">move</span></h2>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+          <figure style="margin: 0; width: 180px; height: 104px; border: 1px dashed #4A4A4A; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.4; color: #8E8E8E; text-align: center">[Photo: DisasterX rover]</figure>
+          <a href="#research" style="min-height: 44px; display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; text-decoration: none">Read the paper<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+        </div>
+      </div>
+      <div class="ln" style="display: flex; flex-direction: column; gap: 16px">
+        <p style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">At AIUB I started building robots: a soccer bot for the intra-university competition, and an entry at the Technoxian World Robotics Championship in 2024.</p>
+        <p style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">In 2025 I built DisasterX, an ESP32-CAM rover that streams video and sensor readings from places too dangerous to send people. It became my first paper as first author, published alongside a seismic sensor network we designed for earthquake prediction.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="4" data-state="out" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding: 96px clamp(24px, 6vw, 96px) 56px; box-sizing: border-box">
+    <div class="copy" style="max-width: 42%; display: flex; flex-direction: column; gap: 18px">
+      <h2 class="ln" data-head="1" style="margin: 0; font-size: clamp(38px, 3.8vw, 60px); line-height: 1.02; font-weight: 800">Robots kept misreading <span style="color: #FF4F7B">faces</span></h2>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">A robot that responds to people has to read their faces, and raw classifiers flicker with every blink. For CogniLink, my desktop companion robot, I tracked 468 facial landmarks and wrote Sticky Focus, a filter that waits for 85% agreement before the robot changes its mood. Behavioral jitter dropped by 90%.</p>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">That problem became my thesis: facial expression recognition that holds up when pose and lighting change, using anatomical disentanglement and contrastive learning. Along the way I co-authored work on reading emotion from EEG signals.</p>
+      <div class="ln" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+        <figure style="margin: 0; width: 180px; height: 104px; border: 1px dashed #4A4A4A; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.4; color: #8E8E8E; text-align: center">[Clip: CogniLink reacting]</figure>
+        <a href="#work" style="min-height: 44px; display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; text-decoration: none">See CogniLink<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="5" data-state="out" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 96px clamp(24px, 6vw, 96px) 56px; box-sizing: border-box">
+    <div class="copy" style="max-width: 640px; display: flex; flex-direction: column; gap: 18px; background: #000000; padding: 32px 36px; border-radius: 16px; box-sizing: border-box">
+      <h2 class="ln" data-head="1" style="margin: 0; font-size: clamp(36px, 3.4vw, 54px); line-height: 1.04; font-weight: 800">Then I turned to my own <span style="color: #16C7A6">language</span></h2>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">Dense Bangla text can shut out readers with dyslexia. Shohoj Lipi, built for the SciBlitz AI Challenge 2026 at IEEE CUET, scores how hard a passage is, flags difficult sentences with a fine-tuned BanglaBERT model (85.1% validation accuracy) and rewrites them with an LLM while keeping the facts intact.</p>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">It reads aloud, marks syllable boundaries and shows exactly what changed, so the reader can always check the original.</p>
+      <div class="ln" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+        <figure style="margin: 0; width: 180px; height: 104px; border: 1px dashed #4A4A4A; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.4; color: #8E8E8E; text-align: center">[Screenshot: Shohoj Lipi]</figure>
+        <a href="#work" style="min-height: 44px; display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; text-decoration: none">Try Shohoj Lipi<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="6" data-state="out" style="position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 96px clamp(24px, 6vw, 96px) clamp(40px, 7vh, 72px); box-sizing: border-box">
+    <div class="copy" style="max-width: 42%; display: flex; flex-direction: column; gap: 18px">
+      <h2 class="ln" data-head="1" style="margin: 0; font-size: clamp(38px, 3.8vw, 60px); line-height: 1.02; font-weight: 800">Research only matters once it <span style="color: #B8E62E">ships</span></h2>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">Today I work as a full-stack developer. I built the website for Greensoft Solutions, an IT and cybersecurity firm that works with the Supreme Court of Bangladesh and the ICT Division, and Chakrify, which reads a CV and scores it against a job description.</p>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">Shipping taught me what papers don't: load times, failure cases and the person on the other side of the screen.</p>
+      <div class="ln" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+        <figure style="margin: 0; width: 180px; height: 104px; border: 1px dashed #4A4A4A; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.4; color: #8E8E8E; text-align: center">[Screenshot: Greensoft site]</figure>
+        <a href="#work" style="min-height: 44px; display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; text-decoration: none">See shipped work<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="7" data-state="out" style="position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding: 96px clamp(24px, 6vw, 96px) clamp(40px, 7vh, 72px); box-sizing: border-box">
+    <div class="copy" style="max-width: 720px; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center">
+      <h2 class="ln" data-head="1" style="margin: 0; font-size: clamp(38px, 3.8vw, 60px); line-height: 1.02; font-weight: 800">What comes <span style="color: #FF7A1A">next</span></h2>
+      <p class="ln" style="margin: 0; font-size: 18px; line-height: 1.65; color: #CFC9C0">I want to go deeper. I'm looking for a funded master's in machine learning, where I can keep working on affective computing and Bangla document recognition, and for AI engineering work where models leave the notebook and meet real users.</p>
+      <div class="ln center-row" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px">
+        <a href="#work" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; background: #FF7A1A; color: #000000; text-decoration: none; font-weight: 600; font-size: 17px">Hiring? See shipped work</a>
+        <a href="#research" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; border: 1.5px solid #F5F1EA; color: #F5F1EA; text-decoration: none; font-weight: 600; font-size: 17px; box-sizing: border-box">Supervising? See research</a>
+      </div>
+      <p class="ln" style="margin: 0; font-size: 17px; line-height: 1.6; color: #CFC9C0">Or just say hi at <a href="mailto:anjir.jm@gmail.com" style="font-weight: 600">anjir.jm@gmail.com</a>.</p>
+    </div>
+  </section>
+
+  <a href="#" style="position: absolute; top: 18px; left: clamp(24px, 6vw, 96px); min-height: 44px; display: flex; align-items: center; color: #F5F1EA; text-decoration: none; font-weight: 800; font-size: 18px">Anjir Jaman</a>
+  <nav aria-label="Primary" style="position: absolute; top: 18px; right: clamp(24px, 6vw, 96px); display: flex; gap: 24px; font-size: 15px; font-weight: 500">
+    <a href="#work" style="color: #E7E1D8; text-decoration: none; min-height: 44px; display: flex; align-items: center">Work</a>
+    <a href="#research" style="color: #E7E1D8; text-decoration: none; min-height: 44px; display: flex; align-items: center">Research</a>
+    <a href="#cv" style="color: #E7E1D8; text-decoration: none; min-height: 44px; display: flex; align-items: center">CV</a>
+  </nav>
+
+  <button class="skip prev" type="button" onClick="{{prev}}" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid #F5F1EA; background: #000000; color: #F5F1EA; font-family: 'Archivo', sans-serif; font-size: 15px; cursor: pointer">Previous chapter</button>
+  <button class="skip" type="button" onClick="{{next}}" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 0; background: #FF7A1A; color: #000000; font-family: 'Archivo', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer">Next chapter</button>
+
+  <sc-if value="{{noGL}}" hint-placeholder-val="{{false}}">
+    <p style="position: absolute; right: 24px; bottom: 16px; margin: 0; font-size: 14px; color: #A8A29A">The animation needs WebGL.</p>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { noGL: false };
+    this.N = 8;
+    this.P = 12000;
+    this.Ht = 3000;
+    this.cur = 0;
+    this.trans = null;
+    this.acc = 0;
+    this.lastWheel = 0;
+    this.ptr = null;
+    this.col = {
+      orange: [1, 0.478, 0.102], yellow: [1, 0.773, 0.192], warm: [1, 0.89, 0.77], white: [0.96, 0.945, 0.918],
+      coral: [1, 0.31, 0.482], cobalt: [0.24, 0.42, 1], teal: [0.086, 0.78, 0.65], lime: [0.72, 0.9, 0.18]
+    };
+    this.pal = [
+      null,
+      [['orange', 0.78], ['warm', 0.22]],
+      [['orange', 0.62], ['yellow', 0.38]],
+      [['orange', 0.58], ['cobalt', 0.42]],
+      [['orange', 0.58], ['coral', 0.42]],
+      [['orange', 0.52], ['teal', 0.48]],
+      [['orange', 0.58], ['lime', 0.42]],
+      [['orange', 0.4], ['yellow', 0.12], ['cobalt', 0.12], ['coral', 0.12], ['teal', 0.12], ['lime', 0.12]]
+    ];
+    this.headPal = [
+      [['orange', 1]],
+      [['white', 0.7], ['orange', 0.3]],
+      [['white', 0.7], ['yellow', 0.3]],
+      [['white', 0.7], ['cobalt', 0.3]],
+      [['white', 0.7], ['coral', 0.3]],
+      [['white', 0.7], ['teal', 0.3]],
+      [['white', 0.7], ['lime', 0.3]],
+      [['white', 0.6], ['orange', 0.4]]
+    ];
+    this.inType = ['zoomback', 'zoom', 'orbit', 'shock', 'scan', 'ink', 'grid', 'collapse'];
+    this.spec = {
+      zoom: { T: 3.6, pre: 0.24, sig: 0.45 },
+      zoomback: { T: 3.0, pre: 0, sig: 0.4 },
+      orbit: { T: 2.8, pre: 0, sig: 0.4 },
+      shock: { T: 2.8, pre: 0, sig: 0.55 },
+      scan: { T: 3.0, pre: 0, sig: 0.62 },
+      ink: { T: 3.0, pre: 0, sig: 0.6 },
+      grid: { T: 2.8, pre: 0, sig: 0.5 },
+      collapse: { T: 3.2, pre: 0, sig: 0.3 },
+      drift: { T: 2.6, pre: 0, sig: 0.4 }
+    };
+    this.faceB64 = '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';
+    this.setRoot = (el) => { this.root = el; };
+    this.setCanvas = (el) => { this.canvas = el; };
+    this.next = () => this.go(1);
+    this.prev = () => this.go(-1);
+    this.inCopy = (e) => {
+      let el = e.target;
+      while (el && el !== e.currentTarget) {
+        if (el.classList && el.classList.contains('copy') && el.scrollHeight > el.clientHeight + 2) return true;
+        el = el.parentElement;
+      }
+      return false;
+    };
+    this.onWheel = (e) => {
+      if (this.inCopy(e)) return;
+      const now = performance.now();
+      if (now - this.lastWheel > 220) this.acc = 0;
+      this.lastWheel = now;
+      if (this.locked()) { this.acc = 0; return; }
+      this.acc += e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+      if (Math.abs(this.acc) > 45) { const d = this.acc > 0 ? 1 : -1; this.acc = 0; this.go(d); }
+    };
+    this.onTouchStart = (e) => {
+      const t = e.touches && e.touches[0];
+      if (t) this.touch = { x: t.clientX, y: t.clientY, skip: this.inCopy(e) };
+    };
+    this.onTouchEnd = (e) => {
+      const t = e.changedTouches && e.changedTouches[0];
+      if (!t || !this.touch || this.touch.skip) { this.touch = null; return; }
+      const dy = this.touch.y - t.clientY, dx = this.touch.x - t.clientX;
+      if (Math.abs(dy) > 50 && Math.abs(dy) > Math.abs(dx)) this.go(dy > 0 ? 1 : -1);
+      this.touch = null;
+    };
+    this.onMove = (e) => {
+      if (!this.canvas) return;
+      const r = this.canvas.getBoundingClientRect();
+      if (!r.width) return;
+      const k = this.canvas.clientWidth / r.width;
+      this.ptr = { x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k };
+    };
+    this.onLeave = () => { this.ptr = null; };
+  }
+
+  componentDidMount() { this.tries = 0; this.boot(); }
+
+  componentWillUnmount() {
+    this.dead = true;
+    cancelAnimationFrame(this.raf);
+    clearTimeout(this.rt);
+    if (this.ro) this.ro.disconnect();
+  }
+
+  locked() {
+    if (!this.trans) return false;
+    return (performance.now() - this.trans.t0) / (this.trans.T * 1000) < 0.8;
+  }
+
+  setScene(k, st) {
+    const el = this.scenes && this.scenes[k];
+    if (!el) return;
+    el.setAttribute('data-state', st);
+    el.setAttribute('aria-hidden', st === 'in' ? 'false' : 'true');
+  }
+
+  go(d) {
+    if (!this.scenes) return;
+    if (this.trans) {
+      if (this.locked()) return;
+      this.finishTrans();
+    }
+    const to = this.cur + d;
+    if (to < 0 || to >= this.N) return;
+    const type = d > 0 ? this.inType[to] : (to === 0 ? 'zoomback' : 'drift');
+    const sp = this.spec[type];
+    this.setScene(this.cur, 'out');
+    if (this.still || !this.ready) {
+      this.cur = to;
+      this.setScene(to, 'in');
+      this.headInAt = performance.now();
+      return;
+    }
+    this.trans = { from: this.cur, to, type, T: sp.T, pre: sp.pre, sig: sp.sig, t0: performance.now(), started: false, revealed: false };
+  }
+
+  finishTrans() {
+    const tr = this.trans;
+    if (!tr) return;
+    this.cur = tr.to;
+    if (!tr.revealed) { this.setScene(tr.to, 'in'); this.headInAt = performance.now(); }
+    this.trans = null;
+    for (let i = 0; i < this.P; i++) { this.vx[i] = 0; this.vy[i] = 0; }
+    if (this.scan) this.scan.style.opacity = '0';
+  }
+
+  boot() {
+    if (this.dead) return;
+    if (!this.canvas || !this.root) { if (this.tries++ < 60) this.raf = requestAnimationFrame(() => this.boot()); return; }
+    this.scenes = Array.from(this.root.querySelectorAll('[data-scene]'));
+    this.heads = this.scenes.map((s) => s.querySelector('[data-head]'));
+    this.scan = this.root.querySelector('[data-scan]');
+    this.scenes.forEach((s, i) => s.setAttribute('aria-hidden', i === 0 ? 'false' : 'true'));
+    if (!this.initGL()) { this.setState({ noGL: true }); return; }
+    this.still = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const P = this.P;
+    const F = () => new Float32Array(P);
+    this.x = F(); this.y = F(); this.vx = F(); this.vy = F(); this.al = F(); this.sz = F();
+    this.cr = F(); this.cg = F(); this.cb = F();
+    this.sx = F(); this.sy = F(); this.sal = F(); this.scr = F(); this.scg = F(); this.scb = F();
+    this.mx = F(); this.my = F(); this.stg = F();
+    this.rA = F(); this.rB = F(); this.nz1 = F(); this.nz2 = F(); this.ph = F(); this.delay = F();
+    this.disp = new Float32Array(P * 2);
+    this.out = new Float32Array(P * 7);
+    for (let i = 0; i < P; i++) {
+      this.rA[i] = Math.random(); this.rB[i] = Math.random();
+      this.nz1[i] = Math.random() * 2 - 1; this.nz2[i] = Math.random() * 2 - 1;
+      this.ph[i] = Math.random() * Math.PI * 2;
+      this.delay[i] = this.still ? 0 : 0.2 + Math.random() * 0.8;
+    }
+    this.t = 0;
+    this.headInAt = -1e9;
+    this.decodeFace();
+    this.resize();
+    let fonts = Promise.resolve();
+    if (document.fonts && document.fonts.load) {
+      fonts = Promise.all([
+        document.fonts.load('800 80px "Archivo"', 'Teaching machines'),
+        document.fonts.load('700 120px "Anek Bangla"', 'আনজির সহজ Anjir')
+      ]).catch(() => {});
+    }
+    Promise.race([fonts, new Promise((r) => setTimeout(r, 1500))]).then(() => {
+      if (this.dead) return;
+      this.build();
+      const W = this.cw, H = this.chH;
+      for (let i = 0; i < P; i++) {
+        this.x[i] = Math.random() * W; this.y[i] = Math.random() * H;
+        this.al[i] = 0; this.sz[i] = 2.2;
+        const c = this.shapes[0].col;
+        this.cr[i] = c[i * 3]; this.cg[i] = c[i * 3 + 1]; this.cb[i] = c[i * 3 + 2];
+      }
+      this.ready = true;
+      if (window.ResizeObserver) {
+        this.ro = new ResizeObserver(() => {
+          clearTimeout(this.rt);
+          this.rt = setTimeout(() => { this.resize(); this.build(); }, 160);
+        });
+        this.ro.observe(this.canvas);
+      }
+      this.last = performance.now();
+      const loop = (now) => {
+        if (this.dead) return;
+        this.frame(now);
+        this.raf = requestAnimationFrame(loop);
+      };
+      this.raf = requestAnimationFrame(loop);
+    });
+  }
+
+  decodeFace() {
+    const bin = atob(this.faceB64);
+    const n = Math.floor(bin.length / 5);
+    this.faceN = n;
+    this.face = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const o = i * 5;
+      this.face[i * 3] = (bin.charCodeAt(o) | (bin.charCodeAt(o + 1) << 8)) / 65535;
+      this.face[i * 3 + 1] = (bin.charCodeAt(o + 2) | (bin.charCodeAt(o + 3) << 8)) / 65535;
+      this.face[i * 3 + 2] = bin.charCodeAt(o + 4) / 255;
+    }
+  }
+
+  resize() {
+    const d = Math.min(window.devicePixelRatio || 1, 2);
+    this.cw = Math.max(1, this.canvas.clientWidth);
+    this.chH = Math.max(1, this.canvas.clientHeight);
+    const w = Math.round(this.cw * d), h = Math.round(this.chH * d);
+    if (this.canvas.width !== w || this.canvas.height !== h) { this.canvas.width = w; this.canvas.height = h; }
+    this.dpr = d;
+    this.wide = this.cw >= 900;
+  }
+
+  region(s) {
+    const W = this.cw, H = this.chH;
+    if (!this.wide) return s === 0 ? { x0: W * 0.04, y0: H * 0.07, w: W * 0.92, h: H * 0.4 } : { x0: W * 0.06, y0: H * 0.07, w: W * 0.88, h: H * 0.34 };
+    const r = {
+      0: [0.06, 0.05, 0.88, 0.64],
+      2: [0.42, 0.06, 0.54, 0.88],
+      3: [0.04, 0.6, 0.92, 0.34],
+      4: [0.05, 0.08, 0.42, 0.84],
+      5: [0.04, 0.06, 0.92, 0.88],
+      6: [0.5, 0.08, 0.45, 0.55],
+      7: [0.2, 0.05, 0.6, 0.38]
+    }[s] || [0.54, 0.14, 0.4, 0.74];
+    return { x0: W * r[0], y0: H * r[1], w: W * r[2], h: H * r[3] };
+  }
+
+  pick(pal, r) {
+    let a = 0;
+    for (const [name, w] of pal) { a += w; if (r < a) return this.col[name]; }
+    return this.col[pal[pal.length - 1][0]];
+  }
+
+  fill(out, pts, from, count, jitter) {
+    const n = pts.length / 2;
+    if (!n) return;
+    const order = new Uint32Array(n);
+    for (let i = 0; i < n; i++) order[i] = i;
+    for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = order[i]; order[i] = order[j]; order[j] = t; }
+    for (let i = 0; i < count; i++) {
+      const k = order[i % n], j = i >= n ? jitter : 0;
+      out[(from + i) * 2] = pts[k * 2] + (Math.random() - 0.5) * j;
+      out[(from + i) * 2 + 1] = pts[k * 2 + 1] + (Math.random() - 0.5) * j;
+    }
+  }
+
+  samplePixels(R, draw, st) {
+    const w = Math.max(1, Math.round(R.w)), h = Math.max(1, Math.round(R.h));
+    const off = document.createElement('canvas');
+    off.width = w; off.height = h;
+    const c = off.getContext('2d');
+    c.fillStyle = '#000'; c.strokeStyle = '#000'; c.lineCap = 'round'; c.lineJoin = 'round';
+    draw(c, w, h);
+    const data = c.getImageData(0, 0, w, h).data;
+    const pts = [];
+    for (let y = 0; y < h; y += st) {
+      for (let x = 0; x < w; x += st) {
+        if (data[(y * w + x) * 4 + 3] > 110) pts.push(R.x0 + x + (Math.random() - 0.5) * st, R.y0 + y + (Math.random() - 0.5) * st);
+      }
+    }
+    return pts;
+  }
+
+  headPoints(el) {
+    if (!el) return [];
+    let x = 0, y = 0, n = el;
+    while (n && n !== this.root) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+    const R = { x0: x, y0: y, w: el.offsetWidth, h: el.offsetHeight + 12 };
+    const cs = getComputedStyle(el);
+    const fs = parseFloat(cs.fontSize) || 48;
+    const lh = parseFloat(cs.lineHeight) || fs * 1.05;
+    const center = cs.textAlign === 'center';
+    const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    return this.samplePixels(R, (c, w) => {
+      c.font = (cs.fontWeight || '800') + ' ' + fs + 'px ' + cs.fontFamily;
+      c.textBaseline = 'alphabetic';
+      const words = text.split(' ');
+      const lines = [];
+      let cur = '';
+      for (const wd of words) {
+        const t = cur ? cur + ' ' + wd : wd;
+        if (c.measureText(t).width > w + 1 && cur) { lines.push(cur); cur = wd; } else cur = t;
+      }
+      if (cur) lines.push(cur);
+      const m = c.measureText('Hg');
+      const asc = m.fontBoundingBoxAscent || fs * 0.9, desc = m.fontBoundingBoxDescent || fs * 0.22;
+      lines.forEach((l, i) => {
+        const lx = center ? (w - c.measureText(l).width) / 2 : 0;
+        c.fillText(l, lx, i * lh + (lh - (asc + desc)) / 2 + asc);
+      });
+    }, fs > 70 ? 3 : 2);
+  }
+
+  fitText(c, w, h, lines) {
+    const fam = '"Anek Bangla", "Archivo", sans-serif';
+    let fs = h / lines.length * 0.72;
+    c.font = '700 ' + fs + 'px ' + fam;
+    const mw = Math.max.apply(null, lines.map((l) => c.measureText(l).width));
+    if (mw > w * 0.94) { fs *= w * 0.94 / mw; c.font = '700 ' + fs + 'px ' + fam; }
+    c.textAlign = 'center';
+    c.textBaseline = 'alphabetic';
+    const lh = fs * 1.12, total = lh * lines.length;
+    lines.forEach((l, i) => {
+      const m = c.measureText(l);
+      const asc = m.actualBoundingBoxAscent || fs * 0.7, desc = m.actualBoundingBoxDescent || fs * 0.2;
+      const cy = h / 2 - total / 2 + lh * (i + 0.5);
+      c.fillText(l, w / 2, cy + (asc - desc) / 2);
+    });
+  }
+
+  meshFace() {
+    let pts = [], N = 800;
+    const ga = Math.PI * (3 - Math.sqrt(5));
+    while (pts.length < 468) {
+      pts = [];
+      for (let i = 0; i < N; i++) {
+        const y = 1 - 2 * (i + 0.5) / N, r = Math.sqrt(1 - y * y), th = ga * i, z = Math.sin(th) * r;
+        if (z > -0.15) pts.push([Math.cos(th) * r, y, z]);
+      }
+      N += 4;
+    }
+    return pts.slice(0, 468).map(([x, y, z]) => {
+      let X = x * 0.8, Y = y * 1.08, Z = z * 0.9;
+      if (Y < -0.3) { const t = (-Y - 0.3) / 0.8; X *= 1 - 0.35 * t * t; Z *= 1 - 0.15 * t; }
+      const f = Math.max(0, z);
+      Z += 0.24 * Math.exp(-(X * X / 0.010 + (Y + 0.05) * (Y + 0.05) / 0.05)) * f;
+      const ex = (Math.abs(X) - 0.28) * (Math.abs(X) - 0.28), ey = (Y - 0.2) * (Y - 0.2);
+      Z -= 0.09 * Math.exp(-(ex / 0.012 + ey / 0.008)) * f;
+      return [X, Y, Z];
+    });
+  }
+
+  buildMachine() {
+    const parts = [], polys = [];
+    const P_ = (o) => { parts.push(o); return parts.length - 1; };
+    const add = (p, pts, w) => polys.push({ p, pts, w: w || 1 });
+    const gear = (r, n, inward) => {
+      const tip = inward ? r * 0.9 : r * 1.12, root = inward ? r : r * 0.92, span = Math.PI * 2 / n, out = [];
+      for (let k = 0; k < n; k++) {
+        const a = k * span;
+        [[root, a], [root, a + 0.2 * span], [tip, a + 0.3 * span], [tip, a + 0.7 * span], [root, a + 0.8 * span]].forEach(([rr, aa]) => out.push([Math.cos(aa) * rr, Math.sin(aa) * rr]));
+      }
+      out.push(out[0]);
+      return out;
+    };
+    const circ = (r, cx, cy, seg) => {
+      const s = seg || 48, o = [];
+      for (let k = 0; k <= s; k++) { const a = k / s * Math.PI * 2; o.push([(cx || 0) + Math.cos(a) * r, (cy || 0) + Math.sin(a) * r]); }
+      return o;
+    };
+    const spokes = (p, r0, r1, n) => { for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; add(p, [[Math.cos(a) * r0, Math.sin(a) * r0], [Math.cos(a) * r1, Math.sin(a) * r1]]); } };
+
+    let p = P_({ kind: 'rot', cx: 0, cy: 0, w: 0.02, ph: 0, col: 'teal', depth: 0.5 });
+    add(p, circ(0.54, 0, 0, 120), 0.45);
+    const traces = [[-2.7, 'h'], [-2.25, 'v'], [-1.35, 'v'], [-0.55, 'h'], [0.45, 'h'], [1.25, 'v'], [1.9, 'v'], [2.55, 'h'], [3.05, 'h'], [-1.0, 'v'], [0.95, 'v'], [-2.95, 'h']];
+    traces.forEach(([a, m]) => {
+      const c = Math.cos(a), s = Math.sin(a);
+      const st = [c * 0.56, s * 0.56], md = [c * 0.66, s * 0.66];
+      const en = m === 'h' ? [Math.sign(c) * 0.98, md[1]] : [md[0], Math.sign(s) * 0.64];
+      p = P_({ kind: 'circuit', col: 'teal', depth: 0.5, speed: 0.22 + Math.random() * 0.25, phase: Math.random() });
+      add(p, [st, md, en], 0.6);
+      const pad = P_({ kind: 'static', col: 'teal', depth: 0.5 });
+      add(pad, circ(0.014, en[0], en[1], 12), 0.6);
+    });
+    p = P_({ kind: 'rot', cx: 0, cy: 0, w: 0.06, ph: 0, col: 'orange', depth: 1 });
+    add(p, gear(0.4, 40)); add(p, gear(0.31, 30, true)); add(p, circ(0.355, 0, 0, 72), 0.5);
+    p = P_({ kind: 'rot', cx: 0, cy: 0, w: -0.24, ph: 0, col: 'yellow', depth: 1 });
+    add(p, gear(0.15, 14));
+    for (let k = 0; k < 3; k++) {
+      p = P_({ kind: 'planet', k, col: 'yellow', depth: 1 });
+      add(p, gear(0.075, 8)); add(p, circ(0.025, 0, 0, 16)); spokes(p, 0.025, 0.06, 3);
+    }
+    p = P_({ kind: 'static', col: 'warm', depth: 1 });
+    add(p, circ(0.115)); add(p, circ(0.1));
+    for (let j = 0; j < 6; j++) { p = P_({ kind: 'iris', j, col: 'warm', depth: 1 }); add(p, [[0, 0], [0.11, 0]]); }
+    p = P_({ kind: 'pupil', col: 'coral', depth: 1 });
+    add(p, circ(0.022, 0, 0, 24)); add(p, circ(0.01, 0, 0, 12));
+    const B = [0.57 * Math.cos(-0.15), 0.57 * Math.sin(-0.15)], wB = -0.06 * 0.4 / 0.17;
+    p = P_({ kind: 'rot', cx: B[0], cy: B[1], w: wB, ph: 0.1, col: 'orange', depth: 1 });
+    add(p, gear(0.17, 17)); add(p, circ(0.11)); add(p, circ(0.03, 0, 0, 16)); spokes(p, 0.03, 0.11, 5);
+    p = P_({ kind: 'rot', cx: B[0], cy: B[1], w: wB, ph: 0.1, col: 'cobalt', depth: 1 });
+    add(p, [[-0.06, 0], [0.06, 0]]); add(p, circ(0.013, -0.06, 0, 12)); add(p, circ(0.013, 0.06, 0, 12));
+    const Cc = [B[0] + 0.26 * Math.cos(-1.75), B[1] + 0.26 * Math.sin(-1.75)], wC = -wB * 0.17 / 0.09;
+    p = P_({ kind: 'rot', cx: Cc[0], cy: Cc[1], w: wC, ph: 0, col: 'orange', depth: 1 });
+    add(p, gear(0.09, 9)); add(p, circ(0.025, 0, 0, 16)); spokes(p, 0.025, 0.07, 3);
+    const D = [0.6 * Math.cos(2.95), 0.6 * Math.sin(2.95)], wD = -0.06 * 0.4 / 0.2;
+    p = P_({ kind: 'rot', cx: D[0], cy: D[1], w: wD, ph: 0, col: 'orange', depth: 1 });
+    add(p, gear(0.2, 20)); add(p, circ(0.13)); spokes(p, 0.06, 0.13, 5);
+    p = P_({ kind: 'rot', cx: D[0], cy: D[1], w: wD, ph: 0, col: 'coral', depth: 1 });
+    add(p, circ(0.06, 0, 0, 32));
+    const E = [-0.72, -0.42];
+    p = P_({ kind: 'rot', cx: E[0], cy: E[1], w: wD, ph: 0, col: 'coral', depth: 0.8 });
+    add(p, circ(0.06, 0, 0, 32)); add(p, circ(0.02, 0, 0, 12)); spokes(p, 0.02, 0.06, 3);
+    {
+      const dx = E[0] - D[0], dy = E[1] - D[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy, ny = ux, r = 0.06;
+      const pts = [];
+      const a0 = Math.atan2(ny, nx);
+      pts.push([D[0] + nx * r, D[1] + ny * r], [E[0] + nx * r, E[1] + ny * r]);
+      for (let k = 1; k <= 16; k++) { const a = a0 - k / 16 * Math.PI; pts.push([E[0] + Math.cos(a) * r, E[1] + Math.sin(a) * r]); }
+      pts.push([D[0] - nx * r, D[1] - ny * r]);
+      for (let k = 1; k <= 16; k++) { const a = a0 + Math.PI - k / 16 * Math.PI; pts.push([D[0] + Math.cos(a) * r, D[1] + Math.sin(a) * r]); }
+      const cum = [0];
+      for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
+      const tot = cum[cum.length - 1], res = [];
+      let seg = 1;
+      for (let q = 0; q < 400; q++) {
+        const d = q / 400 * tot;
+        while (seg < cum.length - 1 && cum[seg] < d) seg++;
+        const f = (d - cum[seg - 1]) / ((cum[seg] - cum[seg - 1]) || 1);
+        res.push(pts[seg - 1][0] + (pts[seg][0] - pts[seg - 1][0]) * f, pts[seg - 1][1] + (pts[seg][1] - pts[seg - 1][1]) * f);
+      }
+      this.beltRes = res;
+      p = P_({ kind: 'belt', col: 'coral', depth: 0.8, speed: 0.05 });
+      add(p, pts, 1);
+    }
+    this.pistX = [B[0] - 0.075, B[0] + 0.075];
+    this.crank = { B, wB, ph: 0.1, rc: 0.06, L: 0.32 };
+    for (let k = 0; k < 2; k++) {
+      p = P_({ kind: 'rod', k, col: 'cobalt', depth: 1 });
+      add(p, [[0, 0], [0.32, 0]]);
+      p = P_({ kind: 'piston', k, col: 'cobalt', depth: 1 });
+      add(p, [[-0.035, -0.025], [0.035, -0.025], [0.035, 0.025], [-0.035, 0.025], [-0.035, -0.025]]);
+      p = P_({ kind: 'static', col: 'warm', depth: 1, a: 0.4 });
+      const px = this.pistX[k], y0 = B[1] + 0.21, y1 = B[1] + 0.43;
+      add(p, [[px - 0.045, y0], [px - 0.045, y1], [px + 0.045, y1], [px + 0.045, y0]], 0.8);
+    }
+    this.parts = parts;
+    const Nm = this.P - this.Ht;
+    polys.forEach((pl) => {
+      pl.cum = [0];
+      for (let k = 1; k < pl.pts.length; k++) pl.cum.push(pl.cum[k - 1] + Math.hypot(pl.pts[k][0] - pl.pts[k - 1][0], pl.pts[k][1] - pl.pts[k - 1][1]));
+      pl.len = pl.cum[pl.cum.length - 1];
+    });
+    const totW = polys.reduce((a, pl) => a + pl.len * pl.w, 0);
+    this.mPart = new Uint16Array(Nm); this.mA = new Float32Array(Nm); this.mB = new Float32Array(Nm); this.mF = new Float32Array(Nm);
+    let idx = 0;
+    polys.forEach((pl, pi) => {
+      let cnt = Math.round(pl.len * pl.w / totW * Nm);
+      if (pi === polys.length - 1) cnt = Nm - idx;
+      let seg = 1;
+      for (let q = 0; q < cnt && idx < Nm; q++) {
+        const d = (q + 0.5) / cnt * pl.len;
+        while (seg < pl.cum.length - 1 && pl.cum[seg] < d) seg++;
+        const f = (d - pl.cum[seg - 1]) / ((pl.cum[seg] - pl.cum[seg - 1]) || 1);
+        this.mPart[idx] = pl.p;
+        this.mA[idx] = pl.pts[seg - 1][0] + (pl.pts[seg][0] - pl.pts[seg - 1][0]) * f;
+        this.mB[idx] = pl.pts[seg - 1][1] + (pl.pts[seg][1] - pl.pts[seg - 1][1]) * f;
+        this.mF[idx] = d / (pl.len || 1);
+        idx++;
+      }
+    });
+    while (idx < Nm) { const j = Math.floor(Math.random() * Math.max(1, idx)); this.mPart[idx] = this.mPart[j]; this.mA[idx] = this.mA[j]; this.mB[idx] = this.mB[j]; this.mF[idx] = this.mF[j]; idx++; }
+    const R = this.region(0);
+    const bw = 2.0, bh = 1.32;
+    this.ms = Math.min(R.w / bw, R.h / bh);
+    this.mOx = R.x0 + R.w / 2;
+    this.mOy = R.y0 + R.h / 2;
+  }
+
+  build() {
+    const P = this.P, Ht = this.Ht, W = this.cw, H = this.chH, Ni = P - Ht;
+    for (let i = 0; i < P; i++) { this.disp[i * 2] = Math.random() * W; this.disp[i * 2 + 1] = Math.random() * H; }
+    this.buildMachine();
+    const shapes = [];
+    for (let s = 0; s < this.N; s++) shapes.push({ pos: new Float32Array(P * 2), col: new Float32Array(P * 3), al: new Float32Array(P) });
+    for (let s = 0; s < this.N; s++) {
+      const hp = this.headPoints(this.heads[s]);
+      if (hp.length) this.fill(shapes[s].pos, hp, 0, Ht, 2);
+      else for (let i = 0; i < Ht; i++) { shapes[s].pos[i * 2] = this.disp[i * 2]; shapes[s].pos[i * 2 + 1] = this.disp[i * 2 + 1]; }
+      for (let i = 0; i < Ht; i++) {
+        const c = this.pick(this.headPal[s], this.rA[i]);
+        shapes[s].col[i * 3] = c[0]; shapes[s].col[i * 3 + 1] = c[1]; shapes[s].col[i * 3 + 2] = c[2];
+        shapes[s].al[i] = 0.95;
+      }
+      if (s > 0) {
+        for (let i = Ht; i < P; i++) {
+          const c = this.pick(this.pal[s], this.rB[i]);
+          shapes[s].col[i * 3] = c[0]; shapes[s].col[i * 3 + 1] = c[1]; shapes[s].col[i * 3 + 2] = c[2];
+        }
+      }
+    }
+    const A = 0.7778;
+    let fh, fw, fx0, fy0;
+    if (this.wide) { fh = H * 0.92; fw = fh * A; if (fw > W * 0.44) { fw = W * 0.44; fh = fw / A; } fx0 = W * 0.73 - fw / 2; fy0 = H - fh; }
+    else { fh = H * 0.42; fw = fh * A; if (fw > W * 0.9) { fw = W * 0.9; fh = fw / A; } fx0 = (W - fw) / 2; fy0 = H * 0.06; }
+    const fN = this.faceN, hcx = fx0 + fw * 0.5, hcy = fy0 + fh * 0.4, hr = fh * 0.5;
+    for (let i = 0; i < Ni; i++) {
+      const p = Ht + i, S1 = shapes[1];
+      if (i < fN * 2) {
+        const k = i % fN, j = i >= fN ? 1.6 : 0;
+        S1.pos[p * 2] = fx0 + this.face[k * 3] * fw + (Math.random() - 0.5) * j;
+        S1.pos[p * 2 + 1] = fy0 + this.face[k * 3 + 1] * fh + (Math.random() - 0.5) * j;
+        S1.al[p] = (0.38 + 0.62 * this.face[k * 3 + 2]) * (i >= fN ? 0.55 : 1);
+      } else {
+        const a = Math.random() * Math.PI * 2, rr = hr * (Math.random() < 0.6 ? 1 : 1.08) + (Math.random() - 0.5) * 4;
+        S1.pos[p * 2] = hcx + Math.cos(a) * rr;
+        S1.pos[p * 2 + 1] = hcy + Math.sin(a) * rr;
+        S1.al[p] = 0.16;
+      }
+    }
+    const mesh = this.meshFace();
+    const draws = {
+      2: (c, w, h) => {
+        const r = Math.min(w, h) * 0.46, cx = w / 2, cy = h / 2;
+        c.lineWidth = 2.4;
+        [0, Math.PI / 3, 2 * Math.PI / 3].forEach((a, j) => {
+          c.save(); c.translate(cx, cy); c.rotate(a);
+          c.beginPath(); c.ellipse(0, 0, r, r * 0.34, 0, 0, Math.PI * 2); c.stroke();
+          const t = j * 2.1;
+          c.beginPath(); c.arc(r * Math.cos(t), r * 0.34 * Math.sin(t), 8, 0, Math.PI * 2); c.fill();
+          c.restore();
+        });
+        c.beginPath(); c.arc(cx, cy, r * 0.09, 0, Math.PI * 2); c.fill();
+      },
+      3: (c, w, h) => {
+        c.lineWidth = 2.2;
+        const rows = 5;
+        for (let r = 0; r < rows; r++) {
+          const y0 = h * (r + 0.5) / rows, bx = w * (0.15 + Math.random() * 0.7), sd = w * 0.04;
+          c.beginPath();
+          for (let x = 0; x <= w; x += 3) {
+            const burst = Math.exp(-((x - bx) * (x - bx)) / (2 * sd * sd));
+            const amp = (h / rows) * 0.45 * burst + 2;
+            const y = y0 + Math.sin(x * 0.35 + r) * amp * Math.sin(x * 0.09 + r * 2);
+            if (x === 0) c.moveTo(x, y); else c.lineTo(x, y);
+          }
+          c.stroke();
+        }
+      },
+      4: (c, w, h) => {
+        const yaw = -0.32, cy0 = Math.cos(yaw), sy0 = Math.sin(yaw);
+        const s = Math.min(w / 1.8, h / 2.3), cx = w / 2, cy = h / 2;
+        const pr = mesh.map(([X, Y, Z]) => [cx + (X * cy0 + Z * sy0) * s, cy - Y * s]);
+        c.lineWidth = 1.3;
+        for (let i = 0; i < mesh.length; i++) {
+          const best = [];
+          for (let j = 0; j < mesh.length; j++) {
+            if (j === i) continue;
+            const dx = mesh[i][0] - mesh[j][0], dy = mesh[i][1] - mesh[j][1], dz = mesh[i][2] - mesh[j][2], d2 = dx * dx + dy * dy + dz * dz;
+            if (best.length < 2 || d2 < best[best.length - 1][0]) { best.push([d2, j]); best.sort((a, b) => a[0] - b[0]); if (best.length > 2) best.pop(); }
+          }
+          for (const [, j] of best) { c.beginPath(); c.moveTo(pr[i][0], pr[i][1]); c.lineTo(pr[j][0], pr[j][1]); c.stroke(); }
+        }
+        for (const [px, py] of pr) { c.beginPath(); c.arc(px, py, 3, 0, Math.PI * 2); c.fill(); }
+      },
+      5: (c, w, h) => this.fitText(c, w, h, ['সহজ']),
+      6: (c, w, h) => {
+        const path = (x, y, ww, hh, r) => {
+          c.beginPath(); c.moveTo(x + r, y);
+          c.arcTo(x + ww, y, x + ww, y + hh, r); c.arcTo(x + ww, y + hh, x, y + hh, r);
+          c.arcTo(x, y + hh, x, y, r); c.arcTo(x, y, x + ww, y, r); c.closePath();
+        };
+        const bw = w * 0.62, bh = h * 0.52;
+        const wins = [[w * 0.04, h * 0.06], [w * 0.19, h * 0.24], [w * 0.34, h * 0.42]];
+        c.lineWidth = 3;
+        wins.forEach(([x, y], j) => {
+          c.globalCompositeOperation = 'destination-out';
+          path(x, y, bw, bh, 10); c.fill();
+          c.globalCompositeOperation = 'source-over';
+          path(x, y, bw, bh, 10); c.stroke();
+          c.beginPath(); c.moveTo(x, y + 30); c.lineTo(x + bw, y + 30); c.stroke();
+          for (let k = 0; k < 3; k++) { c.beginPath(); c.arc(x + 18 + k * 14, y + 15, 4, 0, Math.PI * 2); c.fill(); }
+          if (j === 2) [0.7, 0.55, 0.82, 0.4, 0.64].forEach((f, r) => { c.fillRect(x + 22, y + 54 + r * ((bh - 74) / 5), (bw - 44) * f, 7); });
+        });
+      },
+      7: (c, w, h) => this.fitText(c, w, h, ['Anjir', 'আনজির'])
+    };
+    for (let s = 2; s < this.N; s++) {
+      const pts = this.samplePixels(this.region(s), draws[s], 2);
+      if (pts.length) this.fill(shapes[s].pos, pts, Ht, Ni, 2.5);
+      const k = (s === 5 ? 0.5 : 0.92) * (this.wide ? 1 : 0.62);
+      for (let i = Ht; i < P; i++) shapes[s].al[i] = k;
+    }
+    this.shapes = shapes;
+    this.machineFrame(0.25);
+  }
+
+  machineFrame(open) {
+    const S = this.shapes[0], Ht = this.Ht, n = this.P - Ht, ms = this.ms, t = this.still ? 0 : this.t, parts = this.parts;
+    const W = this.cw, H = this.chH;
+    let px = 0, py = 0;
+    if (this.ptr) { px = this.ptr.x / W - 0.5; py = this.ptr.y / H - 0.5; }
+    let pux = 0, puy = 0;
+    if (this.ptr) {
+      const dx = this.ptr.x - this.mOx, dy = this.ptr.y - this.mOy, d = Math.hypot(dx, dy) || 1, m = Math.min(1, d / 300) * 0.04;
+      pux = dx / d * m; puy = dy / d * m;
+    }
+    const st = parts.map((q) => {
+      if (q.kind === 'rot') { const a = q.w * t + q.ph; return { cx: q.cx, cy: q.cy, c: Math.cos(a), s: Math.sin(a) }; }
+      if (q.kind === 'planet') { const ca = 0.12 * t + q.k * Math.PI * 2 / 3, a = 0.6 * t; return { cx: Math.cos(ca) * 0.225, cy: Math.sin(ca) * 0.225, c: Math.cos(a), s: Math.sin(a) }; }
+      if (q.kind === 'iris') {
+        const ao = q.j * Math.PI / 3 + 0.04 * t, ri = 0.012 + 0.08 * open, ai = ao + 1.1 - 0.5 * open;
+        return { ox: Math.cos(ao) * 0.105, oy: Math.sin(ao) * 0.105, ix: Math.cos(ai) * ri, iy: Math.sin(ai) * ri };
+      }
+      if (q.kind === 'rod' || q.kind === 'piston') {
+        const cr = this.crank, a = cr.wB * t + cr.ph + q.k * Math.PI;
+        const pinx = cr.B[0] + Math.cos(a) * cr.rc, piny = cr.B[1] + Math.sin(a) * cr.rc;
+        const pxx = this.pistX[q.k], dx = pxx - pinx;
+        const pyy = piny + Math.sqrt(Math.max(0, cr.L * cr.L - dx * dx));
+        return { ax: pinx, ay: piny, bx: pxx, by: pyy };
+      }
+      if (q.kind === 'circuit') return { pos: ((t * q.speed + q.phase) % 1.4) - 0.2 };
+      if (q.kind === 'belt') return { off: (t * q.speed) % 1 };
+      return null;
+    });
+    for (let j = 0; j < n; j++) {
+      const qi = this.mPart[j], q = parts[qi], s = st[qi], a = this.mA[j], b = this.mB[j];
+      let ux = a, uy = b, alpha = q.a || (q.depth < 1 ? 0.5 : 0.92), cc = this.col[q.col];
+      if (q.kind === 'rot' || q.kind === 'planet') { ux = s.cx + a * s.c - b * s.s; uy = s.cy + a * s.s + b * s.c; }
+      else if (q.kind === 'iris') { const f = this.mF[j]; ux = s.ox + (s.ix - s.ox) * f; uy = s.oy + (s.iy - s.oy) * f; }
+      else if (q.kind === 'pupil') { ux = a + pux; uy = b + puy; }
+      else if (q.kind === 'rod') { const f = this.mF[j]; ux = s.ax + (s.bx - s.ax) * f; uy = s.ay + (s.by - s.ay) * f; }
+      else if (q.kind === 'piston') { ux = s.bx + a; uy = s.by + 0.02 + b; }
+      else if (q.kind === 'belt') {
+        const f = (this.mF[j] + s.off) % 1, k = Math.floor(f * 400) % 400;
+        ux = this.beltRes[k * 2]; uy = this.beltRes[k * 2 + 1];
+      } else if (q.kind === 'circuit') {
+        const d = this.mF[j] - s.pos, g = Math.exp(-(d * d) / 0.004);
+        alpha = 0.32 + 0.68 * g;
+        const y = this.col.yellow;
+        cc = [cc[0] + (y[0] - cc[0]) * g, cc[1] + (y[1] - cc[1]) * g, cc[2] + (y[2] - cc[2]) * g];
+      }
+      const par = (q.depth - 0.75) * 40;
+      const p = Ht + j;
+      S.pos[p * 2] = this.mOx + ux * ms + px * par;
+      S.pos[p * 2 + 1] = this.mOy + uy * ms + py * par;
+      S.col[p * 3] = cc[0]; S.col[p * 3 + 1] = cc[1]; S.col[p * 3 + 2] = cc[2];
+      S.al[p] = alpha;
+    }
+    this.lens = { x: this.mOx, y: this.mOy };
+  }
+
+  ease(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+
+  startFlight() {
+    const tr = this.trans, P = this.P, Ht = this.Ht, W = this.cw, H = this.chH;
+    const B = this.shapes[tr.to].pos, C = this.lens, Oc = this.region(2);
+    tr.oc = { x: Oc.x0 + Oc.w / 2, y: Oc.y0 + Oc.h / 2 };
+    for (let i = 0; i < P; i++) {
+      const sx = this.x[i], sy = this.y[i], bx = B[i * 2], by = B[i * 2 + 1], r = Math.random();
+      this.sx[i] = sx; this.sy[i] = sy; this.sal[i] = this.al[i];
+      this.scr[i] = this.cr[i]; this.scg[i] = this.cg[i]; this.scb[i] = this.cb[i];
+      let s = r, mx = this.disp[i * 2], my = this.disp[i * 2 + 1];
+      switch (tr.type) {
+        case 'zoom': {
+          const qi = i >= Ht ? this.mPart[i - Ht] : -1, dp = qi >= 0 ? this.parts[qi].depth : 1, z = 4 + 6 * dp;
+          mx = C.x + (sx - C.x) * z; my = C.y + (sy - C.y) * z; break;
+        }
+        case 'zoomback': mx = C.x + (bx - C.x) * 8; my = C.y + (by - C.y) * 8; break;
+        case 'shock': s = 1 - by / H; mx = (sx + bx) / 2 + (r - 0.5) * 80; my = H * 1.12; break;
+        case 'scan': s = by / H; mx = bx + (sx - bx) * 0.25; my = by - 60 - r * 40; break;
+        case 'ink': s = bx / W; mx = bx - 80 - r * 60; my = by + (r - 0.5) * 40; break;
+        case 'collapse': mx = W / 2 + (r - 0.5) * 14; my = H / 2 + (Math.random() - 0.5) * 14; s = r * 0.5 + Math.min(1, Math.hypot(sx - W / 2, sy - H / 2) / Math.hypot(W, H) * 2) * 0.5; break;
+        default: break;
+      }
+      this.stg[i] = Math.max(0, Math.min(1, s));
+      this.mx[i] = mx; this.my[i] = my;
+    }
+    tr.started = true;
+  }
+
+  frame(now) {
+    const dt = Math.min(0.05, (now - this.last) / 1000 || 0.016);
+    this.last = now;
+    this.t += dt;
+    if (!this.ready) return;
+    const tr = this.trans;
+    let open = 0.25 + 0.1 * Math.sin(this.t * 0.6);
+    let u = 0;
+    if (tr) {
+      u = (now - tr.t0) / (tr.T * 1000);
+      if (tr.type === 'zoom' && u < tr.pre) open = open + (1 - open) * this.ease(u / tr.pre);
+      else if (tr.type === 'zoom') open = 1;
+    }
+    this.machineFrame(open);
+    if (tr && u >= tr.pre) {
+      if (!tr.started) this.startFlight();
+      const uu = Math.min(1, (u - tr.pre) / (1 - tr.pre));
+      if (!tr.revealed && uu >= 0.62) { tr.revealed = true; this.setScene(tr.to, 'in'); this.headInAt = now; }
+      this.flight(uu, now);
+      if (this.scan) {
+        if (tr.type === 'scan' && uu >= 1 - tr.sig && uu < 1) {
+          const y = this.chH * (uu - (1 - tr.sig)) / tr.sig, R = this.region(4);
+          this.scan.style.left = R.x0 + 'px';
+          this.scan.style.width = R.w + 'px';
+          this.scan.style.transform = 'translateY(' + y.toFixed(1) + 'px)';
+          this.scan.style.opacity = '0.9';
+        } else this.scan.style.opacity = '0';
+      }
+      if (u >= 1) this.finishTrans();
+    } else {
+      this.hold(dt, now, tr ? tr.from : this.cur);
+    }
+    this.draw();
+  }
+
+  hold(dt, now, s) {
+    const P = this.P, Ht = this.Ht, S = this.shapes[s], t = this.t, p = this.ptr;
+    const k = this.still ? 1 : 1 - Math.pow(1 - 0.14, dt * 60), damp = Math.pow(0.72, dt * 60);
+    const hf = Math.min(1, (now - this.headInAt) / 900);
+    for (let i = 0; i < P; i++) {
+      let tx, ty;
+      if (this.t < this.delay[i]) { tx = this.x[i]; ty = this.y[i]; }
+      else {
+        tx = S.pos[i * 2] + Math.sin(t * 0.8 + this.ph[i]) * 0.8;
+        ty = S.pos[i * 2 + 1] + Math.cos(t * 0.7 + this.ph[i]) * 0.8;
+      }
+      if (this.still) { this.x[i] = tx; this.y[i] = ty; }
+      else {
+        let ax = (tx - this.x[i]) * k, ay = (ty - this.y[i]) * k;
+        if (p && i >= Ht && s !== 0) {
+          const dx = this.x[i] - p.x, dy = this.y[i] - p.y, d2 = dx * dx + dy * dy;
+          if (d2 < 5625) { const dd = Math.sqrt(d2) || 1, f = (1 - dd / 75) * 3; ax += dx / dd * f; ay += dy / dd * f; }
+        }
+        if (this.t < this.delay[i] + 0.9) {
+          this.vx[i] = (this.vx[i] + (tx - this.x[i]) * 0.035) * 0.86;
+          this.vy[i] = (this.vy[i] + (ty - this.y[i]) * 0.035) * 0.86;
+        } else {
+          this.vx[i] = (this.vx[i] + ax) * damp;
+          this.vy[i] = (this.vy[i] + ay) * damp;
+        }
+        this.x[i] += this.vx[i];
+        this.y[i] += this.vy[i];
+      }
+      let at = this.t < this.delay[i] ? 0.25 : S.al[i];
+      if (i < Ht) at = 0.95 - 0.85 * hf;
+      this.al[i] += (at - this.al[i]) * (this.still ? 1 : 0.08);
+      this.cr[i] += (S.col[i * 3] - this.cr[i]) * 0.1;
+      this.cg[i] += (S.col[i * 3 + 1] - this.cg[i]) * 0.1;
+      this.cb[i] += (S.col[i * 3 + 2] - this.cb[i]) * 0.1;
+      this.sz[i] += ((i < Ht ? 2.0 : 2.3) - this.sz[i]) * 0.1;
+    }
+  }
+
+  flight(uu, now) {
+    const tr = this.trans, P = this.P, Ht = this.Ht, S = this.shapes[tr.to], sig = tr.sig, type = tr.type;
+    const hf = tr.revealed ? Math.min(1, (now - this.headInAt) / 900) : 0;
+    const oc = tr.oc;
+    for (let i = 0; i < P; i++) {
+      const v = Math.max(0, Math.min(1, (uu - this.stg[i] * sig) / (1 - sig)));
+      const e = this.ease(v), sv = Math.sin(Math.PI * v);
+      const sx = this.sx[i], sy = this.sy[i], bx = S.pos[i * 2], by = S.pos[i * 2 + 1];
+      let x, y;
+      if (type === 'orbit') {
+        const lx = sx + (bx - sx) * e - oc.x, ly = sy + (by - sy) * e - oc.y;
+        const th = 2.4 * sv * (i % 2 ? 1 : 0.6), sc = 1 + 0.3 * sv, c = Math.cos(th), s = Math.sin(th);
+        x = oc.x + (lx * c - ly * s) * sc; y = oc.y + (lx * s + ly * c) * sc;
+      } else if (type === 'grid') {
+        let gx, gy;
+        if (v < 0.55) { const f = this.ease(v / 0.55); gx = sx + (bx - sx) * f; gy = sy; }
+        else { const f = this.ease((v - 0.55) / 0.45); gx = bx; gy = sy + (by - sy) * f; }
+        if (v < 0.98) { gx = Math.round(gx / 14) * 14; gy = Math.round(gy / 14) * 14; }
+        x = gx; y = gy;
+      } else {
+        const a = (1 - e) * (1 - e), b2 = 2 * (1 - e) * e, c2 = e * e;
+        x = a * sx + b2 * this.mx[i] + c2 * bx;
+        y = a * sy + b2 * this.my[i] + c2 * by;
+      }
+      if (type !== 'grid') { x += sv * this.nz1[i] * 14; y += sv * this.nz2[i] * 14; }
+      this.x[i] = x; this.y[i] = y;
+      let ab = S.al[i];
+      if (i < Ht) ab = 0.95;
+      let a = this.sal[i] + (ab - this.sal[i]) * e;
+      if (i < Ht) a = Math.min(1, a + 0.4 * sv) * (1 - 0.85 * hf);
+      if (type === 'zoom') a *= 1 - 0.35 * sv;
+      this.al[i] = a;
+      this.cr[i] = this.scr[i] + (S.col[i * 3] - this.scr[i]) * e;
+      this.cg[i] = this.scg[i] + (S.col[i * 3 + 1] - this.scg[i]) * e;
+      this.cb[i] = this.scb[i] + (S.col[i * 3 + 2] - this.scb[i]) * e;
+      const base = i < Ht ? 2.0 : 2.3;
+      this.sz[i] = base * (type === 'zoom' || type === 'zoomback' ? 1 + 3 * sv : type === 'collapse' ? 1 - 0.4 * sv : 1 + 0.3 * sv);
+      this.vx[i] = 0; this.vy[i] = 0;
+    }
+  }
+
+  initGL() {
+    const gl = this.canvas.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: true });
+    if (!gl) return false;
+    const vs = 'attribute vec2 a;attribute float al;attribute vec3 col;attribute float sz;uniform vec2 r;uniform float d;varying float va;varying vec3 vc;' +
+      'void main(){vec2 z=a/r*2.0-1.0;gl_Position=vec4(z.x,-z.y,0.0,1.0);gl_PointSize=sz*d;va=al;vc=col;}';
+    const fs = 'precision mediump float;varying float va;varying vec3 vc;void main(){vec2 q=gl_PointCoord-0.5;if(dot(q,q)>0.25)discard;gl_FragColor=vec4(vc*va,va);}';
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const p = gl.createProgram();
+    gl.attachShader(p, sh(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return false;
+    gl.useProgram(p);
+    this.gl = gl;
+    this.u = { r: gl.getUniformLocation(p, 'r'), d: gl.getUniformLocation(p, 'd') };
+    this.buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
+    const st = 28;
+    const A = (n, size, off) => { const l = gl.getAttribLocation(p, n); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, st, off); };
+    A('a', 2, 0); A('al', 1, 8); A('col', 3, 12); A('sz', 1, 24);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    return true;
+  }
+
+  draw() {
+    const gl = this.gl;
+    if (!gl || !this.shapes) return;
+    const W = this.canvas.width, H = this.canvas.height, d = this.dpr || 1, P = this.P, o = this.out;
+    for (let i = 0; i < P; i++) {
+      const k = i * 7;
+      o[k] = this.x[i] * d; o[k + 1] = this.y[i] * d; o[k + 2] = this.al[i];
+      o[k + 3] = this.cr[i]; o[k + 4] = this.cg[i]; o[k + 5] = this.cb[i]; o[k + 6] = this.sz[i];
+    }
+    gl.viewport(0, 0, W, H);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(this.u.r, W, H);
+    gl.uniform1f(this.u.d, d);
+    gl.bufferData(gl.ARRAY_BUFFER, o, gl.DYNAMIC_DRAW);
+    gl.drawArrays(gl.POINTS, 0, P);
+  }
+
+  renderVals() {
+    return {
+      setRoot: this.setRoot,
+      setCanvas: this.setCanvas,
+      onWheel: this.onWheel,
+      onTouchStart: this.onTouchStart,
+      onTouchEnd: this.onTouchEnd,
+      onMove: this.onMove,
+      onLeave: this.onLeave,
+      next: this.next,
+      prev: this.prev,
+      noGL: this.state.noGL
+    };
+  }
+}
+</script>
+</body>
+</html>
