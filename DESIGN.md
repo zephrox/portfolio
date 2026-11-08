@@ -57,6 +57,8 @@ Layout variants (`.scene--<name>`):
 
 Vary layouts between neighbouring sections so no two in a row feel the same.
 
+On desktop an illustration may extend a faint back layer across the stage (about 15% of its dots at about a third of its opacity): circuit traces running to the screen edges, a wider lens ring, a large outer orbit, extra seismic rows, a fourth window half off-screen. Back layers are part of the picture, never a pattern, and they stay clear of the text column. Phones show the figure only.
+
 On phones (under 900 px) every layout becomes: illustration in the top 40%, text at the bottom, scrollable if long.
 
 ## Scenes

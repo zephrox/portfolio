@@ -47,4 +47,7 @@ export const LAYOUT = {
   desktopRegion: { x: 0.54, y: 0.14, w: 0.4, h: 0.74 },
   mobileRegion: { x: 0.06, y: 0.07, w: 0.88, h: 0.34 },
   mobileBodyAlpha: 0.62,
+  /** Share of an illustration's dots spent on its faint back layer (desktop only), and that layer's opacity relative to the figure. */
+  backShare: 0.15,
+  backAlpha: 0.32,
 } as const;

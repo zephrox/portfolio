@@ -197,7 +197,13 @@ export function buildMachine(ctx: ShapeBuildContext): BodyShape {
     c[1] + Math.sin(angle) * (rParent + rChild),
   ];
 
-  // Back layer: circuit traces with travelling pulses.
+  // Back layer: circuit traces with travelling pulses. Horizontal traces continue as faint
+  // dotted lines out to the screen edges, so the machine reads as part of a larger board.
+  const R0 = ctx.region;
+  const ms0 = Math.min(R0.w / UNIT_W, R0.h / UNIT_H);
+  const ox0 = R0.x0 + R0.w / 2;
+  const edgeL = -ox0 / ms0;
+  const edgeR = (ctx.layout.width - ox0) / ms0;
   let p: number;
   const traces: [number, 'h' | 'v'][] = [
     [-2.7, 'h'], [-2.25, 'v'], [-1.35, 'v'], [-0.55, 'h'], [0.45, 'h'], [1.25, 'v'],
@@ -213,6 +219,11 @@ export function buildMachine(ctx: ShapeBuildContext): BodyShape {
     add(p, [st, md, en], 0.6);
     p = part({ kind: 'static', color: 'orange', depth: 0.5 });
     add(p, circ(0.014, en[0], en[1], 12), 0.6);
+    const edge = c > 0 ? edgeR : edgeL;
+    if (m === 'h' && Math.abs(edge) > 1.02) {
+      p = part({ kind: 'static', color: 'orange', depth: 0.5, alpha: 0.25 });
+      add(p, [[en[0] + Math.sign(c) * 0.02, en[1]], [edge, en[1]]], 0.12);
+    }
   }
 
   // Ring gear with outer and inner teeth.
