@@ -2,8 +2,9 @@ import * as THREE from 'three';
 import type { ParticleSystem } from './ParticleSystem';
 
 /**
- * Each particle is a tiny round dot. The edge is antialiased over one device pixel (vEdge is that
- * pixel as a fraction of the sprite), so even 2-3 px dots stay round instead of turning square.
+ * Each particle is a small round dot. Dots under 3 device pixels are drawn solid (at that size a
+ * circle and a square look the same, and softening would make them vanish). Larger dots get a
+ * one-device-pixel antialiased edge, so they stay round and crisp without losing brightness.
  */
 const vertexShader = /* glsl */ `
   attribute float aAlpha;
@@ -13,13 +14,13 @@ const vertexShader = /* glsl */ `
   uniform float uDpr;
   varying float vAlpha;
   varying vec3 vColor;
-  varying float vEdge;
+  varying float vPx;
   void main() {
     vec2 z = position.xy / uRes * 2.0 - 1.0;
     gl_Position = vec4(z.x, -z.y, 0.0, 1.0);
     float px = max(1.0, aSize * uDpr);
     gl_PointSize = px;
-    vEdge = 1.0 / px;
+    vPx = px;
     vAlpha = aAlpha;
     vColor = aColor;
   }
@@ -28,11 +29,15 @@ const vertexShader = /* glsl */ `
 const fragmentShader = /* glsl */ `
   varying float vAlpha;
   varying vec3 vColor;
-  varying float vEdge;
+  varying float vPx;
   void main() {
-    float r = length(gl_PointCoord - 0.5) * 2.0;
-    float cover = 1.0 - smoothstep(1.0 - 2.0 * vEdge, 1.0, r);
-    if (cover <= 0.0) discard;
+    float cover = 1.0;
+    if (vPx >= 3.0) {
+      // Distance from the dot's edge in device pixels; fade only across the outermost pixel.
+      float r = length(gl_PointCoord - 0.5) * vPx;
+      cover = clamp(vPx * 0.5 - r + 0.5, 0.0, 1.0);
+      if (cover <= 0.0) discard;
+    }
     float a = vAlpha * cover;
     gl_FragColor = vec4(vColor * a, a);
   }

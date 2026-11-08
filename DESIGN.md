@@ -90,7 +90,7 @@ On phones (under 900 px) every layout becomes: illustration in the top 40%, text
 
 ## Motion
 
-Every particle is a tiny round dot (about 1.6 px on desktop, 1.4 px on phones), with an antialiased edge so it stays round at any pixel density. Drawings read like fine engraving or stipple. Desktop uses 22,000 dots (4,000 for headings); phones use 8,000 (1,600).
+Every particle is a small round dot: 2.4 px on desktop (2.0 px for heading dots), 2.0 px on phones. Never smaller than 2 px, so each dot covers at least one full screen pixel and stays bright on standard-density screens. Dots under 3 device pixels are drawn solid; larger ones get a one-pixel antialiased edge. Desktop uses 18,000 dots (3,500 for headings); phones use 7,000 (1,400).
 
 Every transition has three beats: the old scene breaks apart, particles travel, the new scene assembles. Then the text arrives.
 

@@ -1,7 +1,7 @@
 /** Tuning knobs for the particle engine. Change feel here, not inside the engine code. */
 export const ENGINE = {
-  particles: 22000,
-  headParticles: 4000,
+  particles: 18000,
+  headParticles: 3500,
   maxDpr: 2,
   /** Spring used while a scene is resting. */
   holdStiffness: 0.14,
@@ -22,13 +22,13 @@ export const ENGINE = {
   headFadeMs: 900,
   /** Input is ignored until a transition is this far through. */
   lockUntil: 0.8,
-  /** Dot diameter in CSS px. Tiny dots need more of them for the drawings to stay legible. */
-  dotSize: { head: 1.4, body: 1.6 },
+  /** Dot diameter in CSS px. Kept at 2 px or more so a dot always covers at least one full screen pixel. */
+  dotSize: { head: 2.0, body: 2.4 },
   /** Phones (narrower than LAYOUT.mobileBreakpoint at load) get a budget scaled to their smaller area. */
   mobile: {
-    particles: 8000,
-    headParticles: 1600,
-    dotSize: { head: 1.2, body: 1.4 },
+    particles: 7000,
+    headParticles: 1400,
+    dotSize: { head: 1.8, body: 2.0 },
   },
   /**
    * Wilder transitions: every flight is randomised within its transition's character, so the same
