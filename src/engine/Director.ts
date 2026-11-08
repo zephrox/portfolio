@@ -20,6 +20,8 @@ interface Transition {
   from: number;
   to: number;
   def: TransitionDef;
+  /** This run's duration in seconds: the transition's own, randomly varied a little. */
+  duration: number;
   t0: number;
   started: boolean;
   revealed: boolean;
@@ -155,13 +157,15 @@ export class Director {
       this.headInAt = performance.now();
       return;
     }
-    this.trans = { from: this.cur, to, def: transitions[name], t0: performance.now(), started: false, revealed: false, blockShown: false, ctx: null };
+    const def = transitions[name];
+    const duration = Math.max(ENGINE.wild.minDuration, def.duration * (1 + (Math.random() * 2 - 1) * ENGINE.wild.durationJitter));
+    this.trans = { from: this.cur, to, def, duration, t0: performance.now(), started: false, revealed: false, blockShown: false, ctx: null };
   }
 
   private isLocked(): boolean {
     const tr = this.trans;
     if (!tr) return false;
-    return (performance.now() - tr.t0) / (tr.def.duration * 1000) < ENGINE.lockUntil;
+    return (performance.now() - tr.t0) / (tr.duration * 1000) < ENGINE.lockUntil;
   }
 
   private setSceneState(i: number, state: 'in' | 'out'): void {
@@ -278,7 +282,7 @@ export class Director {
     let open = 0.25 + 0.1 * Math.sin(this.time * 0.6);
     let u = 0;
     if (tr) {
-      u = (now - tr.t0) / (tr.def.duration * 1000);
+      u = (now - tr.t0) / (tr.duration * 1000);
       if (tr.def.irisOpen) open = u < tr.def.preRoll ? open + (1 - open) * ease(u / tr.def.preRoll) : 1;
     }
 

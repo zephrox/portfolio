@@ -75,8 +75,6 @@ export class ParticleSystem {
   private mx: Float32Array;
   private my: Float32Array;
   private stg: Float32Array;
-  private nz1: Float32Array;
-  private nz2: Float32Array;
   private delay: Float32Array;
 
   constructor(n: number, head: number, readonly reduced: boolean, private dotSize: { head: number; body: number }) {
@@ -97,12 +95,8 @@ export class ParticleSystem {
     this.mx = F();
     this.my = F();
     this.stg = F();
-    this.nz1 = F();
-    this.nz2 = F();
     this.delay = F();
     for (let i = 0; i < n; i++) {
-      this.nz1[i] = Math.random() * 2 - 1;
-      this.nz2[i] = Math.random() * 2 - 1;
     }
   }
 
@@ -192,7 +186,12 @@ export class ParticleSystem {
    * an offset from the scene being left (`from`), so particles that have not departed yet keep
    * following that scene if it animates (the machine keeps turning while a scroll is held).
    */
-  beginFlight(t: Target, def: TransitionDef, ctx: FlightContext, from: Target): void {
+  /** Per-flight random phase for the mid-flight swirl, so each run swirls differently. */
+  private flightSeed = 0;
+
+  beginFlight(t: Target, def: TransitionDef, ctx: FlightContext, from: Target, seed = Math.random() * 1000): void {
+    const W = ENGINE.wild;
+    this.flightSeed = seed;
     for (let i = 0; i < this.n; i++) {
       const sx = this.x[i];
       const sy = this.y[i];
@@ -207,9 +206,21 @@ export class ParticleSystem {
         width: ctx.width, height: ctx.height, anchor: ctx.anchor, focus: ctx.focus,
         depth: ctx.depthAt(i), rand: Math.random(),
       });
-      this.stg[i] = Math.max(0, Math.min(1, plan.stagger));
-      this.mx[i] = plan.mx;
-      this.my[i] = plan.my;
+      const jitter = this.reduced ? 0 : (Math.random() * 2 - 1) * W.staggerJitter;
+      this.stg[i] = Math.max(0, Math.min(1, plan.stagger + jitter));
+      let mx = plan.mx;
+      let my = plan.my;
+      if (def.path === 'bezier' && !this.reduced) {
+        // Bend the path sideways by a random amount, so paths fan out instead of running parallel.
+        const bx = t.pos[i * 2];
+        const by = t.pos[i * 2 + 1];
+        const L = Math.hypot(bx - sx, by - sy) || 1;
+        const bend = (Math.random() * 2 - 1) * W.curve * L;
+        mx += (-(by - sy) / L) * bend;
+        my += ((bx - sx) / L) * bend;
+      }
+      this.mx[i] = mx;
+      this.my[i] = my;
       this.vx[i] = 0;
       this.vy[i] = 0;
     }
@@ -261,8 +272,10 @@ export class ParticleSystem {
         y = a * sy + b * this.my[i] + c * by;
       }
       if (def.path !== 'grid') {
-        x += sv * this.nz1[i] * 14;
-        y += sv * this.nz2[i] * 14;
+        // Mid-flight swirl: coherent eddies from the flow field, zero at departure and arrival.
+        flow(x * ENGINE.wild.wobbleScale, y * ENGINE.wild.wobbleScale, uu * 3, this.fv, this.flightSeed);
+        x += sv * this.fv[0] * ENGINE.wild.wobble;
+        y += sv * this.fv[1] * ENGINE.wild.wobble;
       }
       this.x[i] = x;
       this.y[i] = y;

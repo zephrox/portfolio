@@ -31,6 +31,22 @@ export const ENGINE = {
     dotSize: { head: 1.2, body: 1.4 },
   },
   /**
+   * Wilder transitions: every flight is randomised within its transition's character, so the same
+   * chapter change never looks identical twice.
+   */
+  wild: {
+    /** Each path bends sideways by up to this fraction of its length, on a random side (curved paths only). */
+    curve: 0.35,
+    /** Each dot's departure moves by up to this much within its wave, so wave fronts look ragged. */
+    staggerJitter: 0.12,
+    /** Mid-flight swirl on the flow field: peak offset in px and the field's spatial scale. */
+    wobble: 26,
+    wobbleScale: 0.003,
+    /** Each run's duration varies by up to this fraction (never below minDuration seconds). */
+    durationJitter: 0.06,
+    minDuration: 2.4,
+  },
+  /**
    * Living drift: at rest every dot wanders around its spot following a slow, divergence-free flow
    * field (the curl of a few random sine waves), so drawings breathe without clumping.
    */
