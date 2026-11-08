@@ -26,8 +26,8 @@ export const ENGINE = {
   dotSize: { head: 2.0, body: 2.4 },
   /** Phones (narrower than LAYOUT.mobileBreakpoint at load) get a budget scaled to their smaller area. */
   mobile: {
-    particles: 7000,
-    headParticles: 1400,
+    particles: 4500,
+    headParticles: 1000,
     dotSize: { head: 1.8, body: 2.0 },
   },
   /**
