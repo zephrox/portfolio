@@ -40,7 +40,7 @@ Never add any of these. They are the patterns that make a site look AI-generated
 - New sections must be added through `scenes.tsx` only. If adding a section needs edits anywhere else, improve the abstraction instead.
 - TypeScript strict. No `any`. No `// @ts-ignore`.
 - Ask before adding a dependency. Prefer a small hand-written function over a library.
-- Keep the `data-scene`, `data-state`, `data-head` and `data-scan` attributes stable.
+- Keep the `data-scene`, `data-state`, `data-head`, `data-scan` and `data-block` attributes stable.
 
 ## Accessibility
 

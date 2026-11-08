@@ -69,7 +69,7 @@ Change `engine/config.ts` (springs, timing, scroll thresholds) or a transition's
 - Work in small steps. After each step run `npm run typecheck` and tell Anjir exactly what to look at in the browser.
 - When Anjir sends a screenshot or describes a feel problem, restate what you think is wrong before changing code.
 - Keep `engine/` free of React and of content. Keep content out of components.
-- Do not rename or remove the `data-scene`, `data-state`, `data-head` or `data-scan` attributes. The engine depends on them.
+- Do not rename or remove the `data-scene`, `data-state`, `data-head`, `data-scan` or `data-block` attributes. The engine depends on them.
 - Commit after each working step with a short message describing the user-visible change.
 
 ## Definition of done

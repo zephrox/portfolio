@@ -32,6 +32,14 @@ export interface SceneConfig {
   regionMobile?: RegionFrac;
   /** Illustration opacity (0..1). Lower it when text sits on top. */
   bodyAlpha?: number;
+  /**
+   * A solid block of the section colour behind the illustration (fractions of the viewport). When set,
+   * the illustration is drawn on it in black cubes. Phones default to the top 46% at full width.
+   */
+  block?: RegionFrac;
+  blockMobile?: RegionFrac;
+  /** True when the heading itself sits on the block (drawn in black), as the intro hook does. */
+  headOnBlock?: boolean;
   /** Transition used to arrive at this section when scrolling forward. */
   enter: TransitionName;
   /** The copy. Each top-level element becomes one staggered reveal step. */

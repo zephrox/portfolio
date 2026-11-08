@@ -57,6 +57,8 @@ export interface ShapeBuildContext {
   count: number;
   /** Base opacity for this section's body particles. */
   alpha: number;
+  /** Whether the faint back layer may be drawn (off when a colour block already fills the stage). */
+  backLayer: boolean;
   assets: Assets;
 }
 
@@ -83,7 +85,14 @@ export interface Target {
 
 export interface EngineScene {
   shape: ShapeSpec;
+  /** The section colour (transition accents such as the scan line). */
   color: RGB;
+  /** Colour of the illustration particles (black ink when drawn on a colour block). */
+  bodyColor: RGB;
+  /** Colour of the heading particles. */
+  headColor: RGB;
+  /** True when the scene has a colour block. */
+  block: boolean;
   enter: import('./transitions').TransitionName;
   region?: RegionFrac;
   regionMobile?: RegionFrac;

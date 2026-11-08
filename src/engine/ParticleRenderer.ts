@@ -81,7 +81,15 @@ const fragmentShader = /* glsl */ `
             : tn == tmin.y ? vec3(0.0, -sign(d.y), 0.0)
             : vec3(0.0, 0.0, -sign(d.z));
     vec3 n = mat3(vR0, vR1, vR2) * nl;
-    float shade = uAmbient + uDiffuse * max(0.0, dot(n, uLight));
+    float lit = max(0.0, dot(n, uLight));
+    // Black ink (cubes drawn on a colour block) can't be shaded by darkening it, so its faces
+    // differ in opacity instead: the lit face lets more of the block show through. Still flat tones.
+    if (max(vColor.r, max(vColor.g, vColor.b)) < 0.04) {
+      float a = vAlpha * (1.0 - 0.5 * lit);
+      gl_FragColor = vec4(0.0, 0.0, 0.0, a);
+      return;
+    }
+    float shade = uAmbient + uDiffuse * lit;
     gl_FragColor = vec4(vColor * shade * vAlpha, vAlpha);
   }
 `;

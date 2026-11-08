@@ -14,6 +14,8 @@ export const ENGINE = {
   introDelay: [0.2, 1.0] as const,
   repelRadius: 75,
   repelForce: 3,
+  /** Fraction of a flight after which the next section's colour block wipes in, so cubes land on colour. */
+  blockInAt: 0.3,
   /** Fraction of a transition after which the next section's text starts to appear. */
   revealAt: 0.62,
   /** How long the heading particles take to fade once the real heading is visible. */

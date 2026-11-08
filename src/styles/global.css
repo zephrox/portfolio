@@ -95,6 +95,35 @@ h2 {
   color: var(--s-muted);
 }
 
+/*
+ * Colour blocks: a solid slab of the section colour behind the canvas. The illustration is
+ * drawn on it in black cubes. Position comes from scenes.tsx as --block-* variables. The Director
+ * flips data-state: the old block wipes away as a transition starts, the new one wipes in as the
+ * cubes begin to land.
+ */
+.block {
+  position: absolute;
+  left: calc(var(--block-x) * 100%);
+  top: calc(var(--block-y) * 100%);
+  width: calc(var(--block-w) * 100%);
+  height: calc(var(--block-h) * 100%);
+  background: var(--section);
+  pointer-events: none;
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path 0.45s ease-in;
+}
+
+.block[data-state='in'] {
+  clip-path: inset(0);
+  transition: clip-path 0.7s var(--ease-out);
+}
+
+/* Text set directly on a block (the intro hook) is black. */
+.scene--ink .heading,
+.scene--ink .hint {
+  color: var(--s-bg);
+}
+
 /* ---------- Header ---------- */
 
 .header {
@@ -323,6 +352,13 @@ h2 {
   padding: 32px 36px;
 }
 
+/* Desktop: this panel sits on a full-screen block of its own colour, so its shadow is black. */
+@media (min-width: 900px) {
+  .scene--center-panel .copy {
+    box-shadow: var(--offset) var(--offset) 0 var(--s-bg);
+  }
+}
+
 .scene--center-bottom {
   align-items: flex-end;
   justify-content: center;
@@ -517,6 +553,12 @@ h2 {
   .header {
     padding: 4px 16px;
   }
+  .block {
+    left: calc(var(--block-mx) * 100%);
+    top: calc(var(--block-my) * 100%);
+    width: calc(var(--block-mw) * 100%);
+    height: calc(var(--block-mh) * 100%);
+  }
   .scene {
     display: flex;
     flex-direction: column;
@@ -565,6 +607,7 @@ h2 {
   .copy,
   .copy > *,
   .scene,
+  .block,
   .button {
     transition: none !important;
   }

@@ -1,13 +1,42 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Director } from '../engine/Director';
 import type { EngineScene } from '../engine/types';
-import { rgbOf } from '../theme/tokens';
+import type { RegionFrac } from '../engine/types';
+import { hexToRgb, palette, rgbOf, surface } from '../theme/tokens';
 import type { SceneConfig } from '../types/scene';
 import { Header } from './Header';
 import { Scene } from './Scene';
 
+/** Black "ink" for illustrations and headings drawn on a colour block. */
+const INK = hexToRgb(surface.bg);
+/** Phones: unless a scene says otherwise, its block fills the top of the screen above the text. */
+const PHONE_BLOCK: RegionFrac = { x: 0, y: 0, w: 1, h: 0.46 };
+
 function toEngine(s: SceneConfig): EngineScene {
-  return { shape: s.shape, color: rgbOf(s.color), enter: s.enter, region: s.region, regionMobile: s.regionMobile, bodyAlpha: s.bodyAlpha };
+  const color = rgbOf(s.color);
+  return {
+    shape: s.shape,
+    color,
+    bodyColor: s.block ? INK : color,
+    headColor: s.headOnBlock ? INK : color,
+    block: Boolean(s.block),
+    enter: s.enter,
+    region: s.region,
+    regionMobile: s.regionMobile,
+    bodyAlpha: s.bodyAlpha,
+  };
+}
+
+/** Position and colour of a scene's block, as CSS variables read by .block in global.css. */
+function blockStyle(s: SceneConfig): CSSProperties {
+  const d = s.block;
+  const m = s.blockMobile ?? PHONE_BLOCK;
+  if (!d) return {};
+  return {
+    '--section': palette[s.color],
+    '--block-x': d.x, '--block-y': d.y, '--block-w': d.w, '--block-h': d.h,
+    '--block-mx': m.x, '--block-my': m.y, '--block-mw': m.w, '--block-mh': m.h,
+  } as CSSProperties;
 }
 
 /** Full-screen story: particle canvas behind, one Scene per chapter on top. */
@@ -32,6 +61,11 @@ export function Stage({ scenes }: { scenes: SceneConfig[] }) {
 
   return (
     <div ref={rootRef} className="stage">
+      {scenes.map((s, i) =>
+        s.block ? (
+          <div key={s.id} className="block" data-block={i} data-state={i === 0 ? 'in' : 'out'} style={blockStyle(s)} aria-hidden="true" />
+        ) : null,
+      )}
       <canvas ref={canvasRef} className="stage__canvas" aria-hidden="true" />
       <div className="stage__scan" data-scan="" aria-hidden="true" />
       {scenes.map((s, i) => (

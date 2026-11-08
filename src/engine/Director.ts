@@ -23,6 +23,7 @@ interface Transition {
   t0: number;
   started: boolean;
   revealed: boolean;
+  blockShown: boolean;
   ctx: FlightContext | null;
 }
 
@@ -40,6 +41,8 @@ export class Director {
   private targets: Target[] = [];
   private shapes: BodyShape[] = [];
   private sections: HTMLElement[] = [];
+  /** Colour blocks behind the canvas, one per section ([data-block]); flipped like sections. */
+  private blocks: (HTMLElement | null)[] = [];
   private heads: (HTMLElement | null)[] = [];
   private scanEl: HTMLElement | null = null;
   private layout: Layout = { width: 1, height: 1, wide: true };
@@ -66,6 +69,8 @@ export class Director {
     const { root, canvas } = this.o;
     this.sections = Array.from(root.querySelectorAll<HTMLElement>('[data-scene]'));
     this.heads = this.sections.map((s) => s.querySelector<HTMLElement>('[data-head]'));
+    this.blocks = this.sections.map((_, i) => root.querySelector<HTMLElement>(`[data-block="${i}"]`));
+    this.blocks.forEach((_, i) => this.setBlockState(i, i === 0 ? 'in' : 'out'));
     this.scanEl = root.querySelector<HTMLElement>('[data-scan]');
     this.sections.forEach((_, i) => this.setSceneState(i, i === 0 ? 'in' : 'out'));
     this.reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -142,13 +147,15 @@ export class Director {
     if (to < 0 || to >= this.sections.length) return;
     const name = dir > 0 ? this.o.scenes[to].enter : to === 0 ? 'zoomBack' : 'drift';
     this.setSceneState(this.cur, 'out');
+    this.setBlockState(this.cur, 'out');
     if (this.reduced || !this.ready) {
       this.cur = to;
       this.setSceneState(to, 'in');
+      this.setBlockState(to, 'in');
       this.headInAt = performance.now();
       return;
     }
-    this.trans = { from: this.cur, to, def: transitions[name], t0: performance.now(), started: false, revealed: false, ctx: null };
+    this.trans = { from: this.cur, to, def: transitions[name], t0: performance.now(), started: false, revealed: false, blockShown: false, ctx: null };
   }
 
   private isLocked(): boolean {
@@ -169,10 +176,16 @@ export class Director {
     } else el.setAttribute('inert', '');
   }
 
+  private setBlockState(i: number, state: 'in' | 'out'): void {
+    const el = this.blocks[i];
+    if (el) el.dataset.state = state;
+  }
+
   private finish(): void {
     const tr = this.trans;
     if (!tr) return;
     this.cur = tr.to;
+    if (!tr.blockShown) this.setBlockState(tr.to, 'in');
     if (!tr.revealed) {
       this.setSceneState(tr.to, 'in');
       this.headInAt = performance.now();
@@ -212,11 +225,14 @@ export class Director {
       if (hp.length) fillTargets(pos, hp, 0, H, 2);
       else for (let i = 0; i < H; i++) { pos[i * 2] = Math.random() * L.width; pos[i * 2 + 1] = Math.random() * L.height; }
       const bodyAlpha = (scene.bodyAlpha ?? 0.92) * (L.wide ? 1 : LAYOUT.mobileBodyAlpha);
-      const shape = buildShape(scene.shape, { layout: L, region: this.regionFor(s), count: body, alpha: bodyAlpha, assets: this.assets });
+      const shape = buildShape(scene.shape, {
+        layout: L, region: this.regionFor(s), count: body, alpha: bodyAlpha, assets: this.assets, backLayer: !scene.block,
+      });
       for (let i = 0; i < N; i++) {
-        color[i * 3] = scene.color[0];
-        color[i * 3 + 1] = scene.color[1];
-        color[i * 3 + 2] = scene.color[2];
+        const c = i < H ? scene.headColor : scene.bodyColor;
+        color[i * 3] = c[0];
+        color[i * 3 + 1] = c[1];
+        color[i * 3 + 2] = c[2];
         if (i < H) alpha[i] = 0.95;
       }
       const target = { pos, alpha, color };
@@ -284,6 +300,10 @@ export class Director {
         tr.started = true;
       }
       const uu = Math.min(1, (u - tr.def.preRoll) / (1 - tr.def.preRoll));
+      if (!tr.blockShown && uu >= ENGINE.blockInAt) {
+        tr.blockShown = true;
+        this.setBlockState(tr.to, 'in');
+      }
       if (!tr.revealed && uu >= ENGINE.revealAt) {
         tr.revealed = true;
         this.setSceneState(tr.to, 'in');

@@ -8,7 +8,7 @@ export function Scene({ index, config }: { index: number; config: SceneConfig })
   const style = { '--section': palette[color] } as CSSProperties;
   return (
     <section
-      className={`scene scene--${layout}`}
+      className={`scene scene--${layout}${config.headOnBlock ? ' scene--ink' : ''}`}
       data-scene={index}
       data-state={index === 0 ? 'in' : 'out'}
       aria-label={label}
